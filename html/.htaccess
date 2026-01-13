@@ -1,0 +1,25 @@
+RewriteEngine On
+
+# 1. Redirigir siempre a HTTPS (Opcional, recomendado en prod)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Si el archivo o carpeta existe, servirlo directamente (css, js, imagenes)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 3. Reescribir todo lo demás quitando la extensión .php
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# 4. Proteger archivos sensibles
+<FilesMatch "\.(sql|log|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Aumentar límites de PHP
+php_value upload_max_filesize 128M
+php_value post_max_size 128M
+php_value memory_limit 256M
+php_value max_execution_time 300
+php_value max_input_time 300

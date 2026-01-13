@@ -1,0 +1,13 @@
+# Ignorar archivos del sistema y entorno
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Ignorar contenido de uploads, pero mantener la carpeta
+html/uploads/*
+!html/uploads/.gitkeep
+
+# SEGURIDAD: Ignorar variables de entorno (si usas .env)
+.envgit rm -r --cached html/uploads
+
+.env

@@ -1,0 +1,49 @@
+# version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./html:/var/www/html
+      - ./config/ssl-vhost.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./certs/apache-selfsigned.crt:/etc/ssl/certs/apache-selfsigned.crt:ro
+      - ./certs/apache-selfsigned.key:/etc/ssl/private/apache-selfsigned.key:ro
+    
+    # Forzamos DNS de Google (8.8.8.8) y Cloudflare (1.1.1.1)
+    # para asegurar que el contenedor pueda resolver dominios externos.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    # ================================
+
+    depends_on:
+      - db
+      - phpmyadmin
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: An4lista2025*%
+      MYSQL_DATABASE: bd_aprobador
+      MYSQL_USER: wv_aprobador
+      MYSQL_PASSWORD: An4lista2025*%
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: An4lista2025*%
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data:

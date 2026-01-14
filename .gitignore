@@ -1,0 +1,12 @@
+# Ignorar archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar TODO el contenido de uploads
+html/uploads/**/*
+
+# Excepto el archivo que mantiene la carpeta viva
+!html/uploads/.gitkeep
+
+# Seguridad
+#.env

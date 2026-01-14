@@ -39,8 +39,8 @@ if (!$apiKey) {
 // $modelName = "gemini-3-pro-preview"; // costo: input -> $1.00, output -> $5.00 por 1M tokens
 // $modelName = "gemini-3-flash-preview"; // costo: input -> $0.50, output -> $3.00 por 1M tokens
 // $modelName = "gemini-2.5-pro"; // costo: input -> $1.00, output -> $5.00 por 1M tokens
-$modelName = "gemini-2.5-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
-// $modelName = "gemini-2.5-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
+// $modelName = "gemini-2.5-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
+$modelName = "gemini-2.5-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
 // $modelName = "gemini-2.0-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
 // $modelName = "gemini-2.0-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
 
@@ -70,7 +70,7 @@ switch ($sensitivity) {
     case 1: // BAJA (Resumen Ejecutivo)
         $instructions = "
         - FILTRO: Considerar únicamente cambios críticos que impacten obligaciones, fechas, montos o partes involucradas.
-        - RESUMEN: Elaborar un informe ejecutivo que mencione solo los cambios más relevantes.
+        - RESUMEN: Describe los cambios más relevantes en el contrato.
         - ENFOQUE: ¡IMPORTANTE! Ignorar modificaciones de formato, puntuación, uso de mayúsculas/minúsculas o palabras conectivas que no alteren el significado. Aunque se presenten cambios de redacción, no incluirlos si no afectan el contenido legal del contrato.";
         break;
         

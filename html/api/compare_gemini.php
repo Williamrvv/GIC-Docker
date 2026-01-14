@@ -84,7 +84,7 @@ switch ($sensitivity) {
     case 3: // ALTA (Estricto / Default)
     default:
         $instructions = "
-        - FILTRO: NINGUNO. Eres un AUDITOR PARANOICO.
+        - FILTRO: NINGUNO. Eres un AUDITOR ESTRICTO.
         - FOCO: Reporta ABSOLUTAMENTE TODO.
         - Si cambió una coma (,), repórtalo.
         - Si cambió 'a' por 'la', repórtalo.

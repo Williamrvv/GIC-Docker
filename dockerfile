@@ -17,7 +17,7 @@ RUN a2enmod rewrite ssl
 RUN echo "0 3 * * * /usr/local/bin/php /var/www/html/cron/backup_nas.php >> /var/log/cron.log 2>&1" > /etc/cron.d/gic-backup
 RUN chmod 0644 /etc/cron.d/gic-backup
 RUN crontab /etc/cron.d/gic-backup
-RUN touch /var/log/cron.log
+#RUN touch /var/log/cron.log
 
 # 5. Script de arranque
 COPY docker-entrypoint.sh /usr/local/bin/

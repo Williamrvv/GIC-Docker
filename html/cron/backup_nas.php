@@ -5,7 +5,7 @@ if (php_sapi_name() !== 'cli') die("Solo consola.");
 require_once __DIR__ . '/../db.php'; 
 
 // CONFIGURACIÓN DE LOGS
-$logFile = '/var/log/gic_nas_sync.log';
+$logFile = __DIR__ . '/nas_sync.log';
 
 // Función para escribir en consola y archivo al mismo tiempo
 function logger($msg, $type = 'INFO') {

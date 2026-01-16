@@ -9,4 +9,4 @@ html/uploads/**/*
 !html/uploads/.gitkeep
 
 # Seguridad
-#.env
+.env

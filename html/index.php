@@ -149,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button onclick="toggleManualLogin()" 
                     id="toggleBtn"
                     class="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors border-b border-slate-200 pb-0.5 hover:border-slate-400">
-                Acceso con Usuario y Contraseña
+                O si lo prefieres... <br> Inicia con Usuario y Contraseña
             </button>
         </div>
 

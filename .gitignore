@@ -10,3 +10,5 @@ html/uploads/**/*
 
 # Seguridad
 .env
+
+html/cron/nas_sync.log

@@ -85,6 +85,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .animate-logo { animation: floatDown 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0; animation-delay: 0.2s; }
     </style>
 </head>
+
+<script>
+        function toggleManualLogin() {
+            const container = document.getElementById('manualLoginContainer');
+            const btn = document.getElementById('toggleBtn');
+            
+            if (container.classList.contains('hidden')) {
+                // Mostrar
+                container.classList.remove('hidden');
+                // Pequeña animación de entrada usando la clase que ya tienes definida
+                container.classList.add('animate-fade-in-up');
+                btn.innerText = "Cancelar acceso manual";
+                btn.classList.replace('text-slate-400', 'text-red-400');
+            } else {
+                // Ocultar
+                container.classList.add('hidden');
+                container.classList.remove('animate-fade-in-up');
+                btn.innerText = "Acceso con Usuario y Contraseña";
+                btn.classList.replace('text-red-400', 'text-slate-400');
+            }
+        }
+    </script>
+
 <body class="bg-slate-900 flex items-center justify-center h-screen px-4 font-sans">
     
     <div class="relative bg-white p-8 pt-28 rounded-[2rem] shadow-2xl w-full max-w-sm animate-card overflow-visible">
@@ -121,27 +144,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span>Ingresar con Microsoft 365</span>
         </a>
 
-        <!-- Separador -->
-        <div class="relative flex py-2 items-center">
-            <div class="flex-grow border-t border-gray-200"></div>
-            <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-bold tracking-wider">O acceso manual</span>
-            <div class="flex-grow border-t border-gray-200"></div>
+        <!-- BOTÓN TOGGLE (ACCESO MANUAL) -->
+        <div class="mt-6 text-center">
+            <button onclick="toggleManualLogin()" 
+                    id="toggleBtn"
+                    class="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors border-b border-slate-200 pb-0.5 hover:border-slate-400">
+                Acceso con Usuario y Contraseña
+            </button>
         </div>
 
-        <!-- Formulario Manual (Restaurado) -->
-        <form method="POST" class="space-y-5 mt-4">
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Usuario</label>
-                <input type="text" name="username" class="w-full bg-gray-50 border border-gray-300 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all" placeholder="Nombre de usuario" required>
-            </div>
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Contraseña</label>
-                <input type="password" name="password" class="w-full bg-gray-50 border border-gray-300 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all" placeholder="••••••••" required>
-            </div>
-            
-            <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-bold rounded-xl text-sm px-5 py-3 text-center transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-500/30">
-                Iniciar Sesión
-            </button>
+        <!-- CONTENEDOR OCULTO DEL FORMULARIO -->
+        <div id="manualLoginContainer" class="hidden mt-6 border-t border-gray-100 pt-6">
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Usuario</label>
+                    <input type="text" name="username" class="w-full bg-gray-50 border border-gray-300 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all" placeholder="Nombre de usuario">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Contraseña</label>
+                    <input type="password" name="password" class="w-full bg-gray-50 border border-gray-300 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 outline-none transition-all" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="w-full text-white bg-slate-800 hover:bg-slate-900 focus:ring-4 focus:ring-slate-300 font-bold rounded-xl text-sm px-5 py-3 text-center transition-all transform hover:scale-[1.02] shadow-lg">
+                    Entrar
+                </button>
+            </form>
+        </div>
         </form>
         
         <p class="mt-8 text-center text-xs text-slate-400">

@@ -136,7 +136,7 @@ require 'includes/header.php';
 
 <!-- LIBRERÍAS IA (Globales en Footer, pero aseguramos acceso al script) -->
 
-<div class="max-w-4xl mx-auto animate-entry">
+<div class="max-w-4xl mx-auto animate-entry px-4 pb-20 md:px-0">
     
     <div class="flex items-center gap-4 mb-6">
         <div class="p-3 bg-purple-100 text-purple-600 rounded-xl">
@@ -165,14 +165,14 @@ require 'includes/header.php';
         <!-- SECCIÓN 1: DOCUMENTO Y ANÁLISIS -->
         <div class="p-6 border-b border-gray-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">1. Documento Principal (Contrato Firmado)</label>
-            <div class="flex gap-4 items-start">
+           <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-start">
                 <div class="flex-1">
                     <input type="file" name="file_contract" id="fileInput" accept=".pdf,.doc,.docx" required 
-                           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
-                           onchange="handleFileSelect(this)">
+                           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer border border-gray-200 rounded-xl">
                 </div>
+                <!-- Botón IA: Full width en móvil -->
                 <button type="button" id="btnAnalyze" onclick="analyzeLegacyDocument()" disabled 
-                        class="bg-purple-600 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all">
+                        class="bg-purple-600 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all w-full md:w-auto">
                     <i data-lucide="sparkles" class="w-4 h-4"></i> Autocompletar con IA
                 </button>
             </div>
@@ -262,9 +262,11 @@ require 'includes/header.php';
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Anexos (Opcional)</h3>
                     <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
                         <?php foreach(['CODE_CONDUCT'=>'Código Conducta', 'ANTI_CORRUPTION'=>'Pol. Anticorrupción', 'NDA'=>'NDA', 'OTHER'=>'Otro'] as $k=>$l): ?>
-                            <div class="flex items-center gap-3 p-2 border border-dashed border-gray-300 dark:border-slate-700 rounded-lg">
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 w-1/3"><?= $l ?></span>
-                                <input type="file" name="annex_<?= $k ?>" class="text-xs w-full text-slate-500">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 border border-dashed border-gray-300 dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-900/50">
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 w-full sm:w-1/3">
+                                    <?= $l ?>
+                                </span>
+                                <input type="file" name="annex_<?= $k ?>" class="text-xs w-full text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-200 file:text-slate-700">
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -273,10 +275,13 @@ require 'includes/header.php';
             </div>
         </div>
 
-        <!-- FOOTER -->
-        <div class="p-6 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900">
-            <button type="reset" class="px-5 py-2.5 text-slate-500 hover:text-slate-700 font-bold">Limpiar</button>
-            <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2">
+        <!-- FOOTER  -->
+        <div class="p-6 border-t border-gray-100 dark:border-slate-700 flex flex-col-reverse sm:flex-row justify-end gap-3 bg-slate-50 dark:bg-slate-900">
+            <button type="reset" class="w-full sm:w-auto px-5 py-3 text-slate-500 hover:text-slate-700 font-bold bg-white sm:bg-transparent border sm:border-0 rounded-xl shadow-sm sm:shadow-none">
+                Limpiar
+            </button>
+            <button type="submit" onclick="window.showLoading('Guardando Histórico', 'Encriptando y archivando...')" 
+                    class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
                 <i data-lucide="save" class="w-4 h-4"></i> Guardar en Archivo
             </button>
         </div>

@@ -228,7 +228,7 @@ require 'includes/header.php';
                         
                         <!-- Input Nombre con Autocompletado -->
                         <div class="relative">
-                            <input type="text" name="initiator_name" id="initiator_name" placeholder="Nombre Completo *" required 
+                            <input type="text" name="initiator_name" id="initiator_name" placeholder="Nombre de usuario / Buscar usuario" required 
                                    autocomplete="off" oninput="searchUser(this.value)"
                                    class="w-full bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                             
@@ -239,8 +239,8 @@ require 'includes/header.php';
                         <input type="email" name="initiator_email" id="initiator_email" placeholder="Correo Corporativo *" required class="w-full bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-sm outline-none">
                         <input type="text" name="initiator_dept" id="initiator_dept" placeholder="Departamento *" required class="w-full bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-sm outline-none">
                     </div>
-                    <p class="text-[10px] text-blue-500 mt-2">
-                        * Si el correo coincide con un usuario existente, se vinculará.
+                    <p class="text-[10px] text-orange-500 mt-2">
+                        * Si el correo no coincide con un usuario existente, se creará un nuevo perfil con rol de solicitante.
                     </p>
                 </div>
 

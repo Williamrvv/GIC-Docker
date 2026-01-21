@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GIC - Desencriptador Offline</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 1rem; width: 400px; text-align: center; border: 1px solid #334155; }
+        h1 { margin: 0 0 10px 0; color: #fff; }
+        input[type="text"] { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: #4ade80; font-family: monospace; border-radius: 6px; margin-top: 5px; box-sizing: border-box; }
+        .drop-zone { border: 2px dashed #475569; padding: 30px; margin: 20px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .drop-zone:hover { border-color: #3b82f6; background: #334155; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+        .status { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 0.9rem; display: none; }
+        .success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
+        .error { background: #450a0a; color: #fca5a5; border: 1px solid #b91c1c; }
+        .debug { font-size: 0.7rem; color: #64748b; margin-top: 10px; text-align: left; display: none; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>GIC Desencriptador Offline</h1>
+    <p style="font-size: 0.8rem; color: #94a3b8;">Modo Híbrido (Binario + Base64)</p>
+
+    <div style="text-align: left;">
+        <label style="font-size: 0.75rem; font-weight: bold;">CLAVE (.env)</label>
+        <input type="text" id="passphrase" value="ver en .env">
+    </div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <span id="fileName">📂 Arrastra el archivo aquí</span>
+    </div>
+    <input type="file" id="fileInput" hidden>
+
+    <button id="btnDecrypt" onclick="decrypt()" disabled>DESENCRIPTAR</button>
+    
+    <div id="status" class="status"></div>
+    <div id="debugLog" class="debug"></div>
+</div>
+
+<script>
+    let fileBuffer = null;
+    let fileName = "";
+
+    // Drag & Drop
+    const dz = document.getElementById('dropZone');
+    dz.ondragover = e => { e.preventDefault(); dz.style.borderColor = '#3b82f6'; };
+    dz.ondragleave = () => { dz.style.borderColor = '#475569'; };
+    dz.ondrop = e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); };
+    document.getElementById('fileInput').onchange = e => handleFile(e.target.files[0]);
+
+    function handleFile(file) {
+        if(!file) return;
+        fileName = file.name;
+        document.getElementById('fileName').innerText = fileName;
+        
+        const reader = new FileReader();
+        reader.onload = e => {
+            fileBuffer = e.target.result;
+            document.getElementById('btnDecrypt').disabled = false;
+            log("Archivo cargado: " + file.size + " bytes");
+            showStatus("", "none");
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    async function decrypt() {
+        const pass = document.getElementById('passphrase').value;
+        if (!fileBuffer || !pass) return;
+
+        try {
+            document.getElementById('btnDecrypt').innerText = "Procesando...";
+            log("Iniciando proceso híbrido...");
+
+            // 1. PREPARAR CLAVE (SHA-256)
+            const enc = new TextEncoder();
+            const keyHash = await window.crypto.subtle.digest("SHA-256", enc.encode(pass));
+            const key = await window.crypto.subtle.importKey("raw", keyHash, { name: "AES-CBC" }, false, ["decrypt"]);
+            log("Clave derivada correctamente.");
+
+            // 2. EXTRAER IV (Primeros 16 Bytes son Binarios)
+            const iv = fileBuffer.slice(0, 16);
+            log("IV extraído (16 bytes).");
+
+            // 3. EXTRAER CONTENIDO (El resto es Texto Base64)
+            const base64Bytes = fileBuffer.slice(16);
+            const decoder = new TextDecoder("utf-8");
+            const base64String = decoder.decode(base64Bytes);
+            log("Base64 detectado: " + base64String.substring(0, 20) + "...");
+
+            // 4. DECODIFICAR BASE64 A BINARIO REAL
+            // Esto convierte el string "dGhpcy4uLi4=" a los bytes reales encriptados
+            const rawString = window.atob(base64String);
+            const rawBytes = new Uint8Array(rawString.length);
+            for (let i = 0; i < rawString.length; i++) {
+                rawBytes[i] = rawString.charCodeAt(i);
+            }
+            log("Base64 decodificado a binario (" + rawBytes.length + " bytes).");
+
+            // 5. DESENCRIPTAR
+            const decrypted = await window.crypto.subtle.decrypt(
+                { name: "AES-CBC", iv: iv },
+                key,
+                rawBytes // Enviamos los bytes decodificados
+            );
+
+            // 6. DESCARGAR
+            const blob = new Blob([decrypted]);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "GIC_" + fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            showStatus("✅ ÉXITO: Archivo recuperado.", "success");
+
+        } catch (e) {
+            console.error(e);
+            log("ERROR: " + e.message);
+            showStatus("❌ Error: Contraseña incorrecta o archivo dañado.", "error");
+        } finally {
+            document.getElementById('btnDecrypt').innerText = "DESENCRIPTAR";
+        }
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('status');
+        if (type === 'none') { el.style.display = 'none'; return; }
+        el.innerText = msg;
+        el.className = "status " + type;
+        el.style.display = 'block';
+    }
+
+    function log(msg) {
+        const el = document.getElementById('debugLog');
+        el.style.display = 'block';
+        el.innerHTML += "<div>" + msg + "</div>";
+    }
+</script>
+
+</body>
+</html>

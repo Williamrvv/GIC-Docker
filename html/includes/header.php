@@ -81,6 +81,12 @@ $inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white transition-
             <a href="contracts" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl <?= ($currentPage == 'contracts' || $currentPage == 'contract_detail') ? $activeClass : $inactiveClass ?>">
                 <i data-lucide="file-text" class="mr-3 h-5 w-5"></i> Contratos
             </a>
+            <!-- CARGA HISTÓRICA (SOLO ADMIN/LEGAL) -->
+            <?php if(hasRole(['SUPER_ADMIN', 'LEGAL'])): ?>
+            <a href="legacy_upload" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl <?= $currentPage == 'legacy_upload' ? $activeClass : $inactiveClass ?>">
+                <i data-lucide="archive-restore" class="mr-3 h-5 w-5"></i> Carga Histórica
+            </a>
+            <?php endif; ?>
             <!-- ENLACE USUARIOS (CONDICIÓN AMPLIADA) -->
             <?php if(hasRole('SUPER_ADMIN') || (!empty($_SESSION['can_manage_users']) && $_SESSION['can_manage_users'] == 1)): ?>
             <a href="users" class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl <?= $currentPage == 'users' ? $activeClass : $inactiveClass ?>">

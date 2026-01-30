@@ -223,7 +223,7 @@ require 'includes/header.php';
                 
                 <!-- SOLICITANTE -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900">
-                    <h3 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">Dueño Original (Solicitante)</h3>
+                    <h3 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">Persona (Solicitante)</h3>
                     <div class="space-y-3">
                         
                         <!-- Input Nombre con Autocompletado -->

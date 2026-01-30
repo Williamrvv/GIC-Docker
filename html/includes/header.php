@@ -1,7 +1,11 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+// Botón Activo (Azul siempre se ve bien)
 $activeClass = "bg-blue-600 text-white shadow-lg shadow-blue-500/30";
-$inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white transition-colors";
+
+// Botón Inactivo (ADAPTATIVO)
+$inactiveClass = "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-white transition-colors";
 ?>
 <!DOCTYPE html>
 <html lang="es" class="light"> <!-- Clase inicial -->
@@ -59,9 +63,9 @@ $inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white transition-
     <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-64 bg-slate-900 dark:bg-slate-950 text-white h-screen fixed z-30 shadow-xl transition-transform duration-300 transform -translate-x-full lg:translate-x-0">
-        <!-- HEADER SIDEBAR (LOGO ESTILO TARJETA/APP) -->
-        <div class="p-6 flex items-center justify-center relative border-b border-slate-800/50">
+    <aside id="sidebar" class="w-64 bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-slate-800 h-screen fixed z-30 shadow-xl transition-transform duration-300 transform -translate-x-full lg:translate-x-0 flex flex-col">
+        <!-- HEADER SIDEBAR -->
+        <div class="p-6 flex items-center justify-center relative border-b border-gray-200 dark:border-slate-800">
             
             <!-- LOGO ESTILIZADO -->
             <img src="assets/img/logo.png" 
@@ -95,7 +99,7 @@ $inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white transition-
             <?php endif; ?>
         </nav>
 
-        <div class="absolute bottom-0 w-full p-4 border-t border-slate-800">
+        <div class="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-slate-800 ">
              <a href="logout.php" class="flex items-center px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-900/20 rounded-xl transition-colors">
                 <i data-lucide="log-out" class="mr-3 h-5 w-5"></i> Cerrar Sesión
             </a>
@@ -159,9 +163,11 @@ $inactiveClass = "text-slate-400 hover:bg-slate-800 hover:text-white transition-
                                 <?php endif; ?>
                             </select>
                         </div>
-                        <a href="logout.php" class="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                            <i data-lucide="log-out" class="w-4 h-4 inline mr-2"></i> Cerrar Sesión
-                        </a>
+                        <div class="mt-auto p-4 border-t border-gray-200 dark:border-slate-800">
+                            <a href="logout.php" class="flex items-center px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                <i data-lucide="log-out" class="mr-3 h-5 w-5"></i> Cerrar Sesión
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

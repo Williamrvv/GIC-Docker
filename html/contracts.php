@@ -494,16 +494,31 @@ if (!empty($_GET['filter'])) {
 <!-- LISTA DE CONTRATOS (CONTENEDOR MEJORADO + STICKY FIX) -->
 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden animate-entry flex flex-col">
     
-    <!-- HEADER DE ESTADO (Solo si hay filtros) -->
+    <!-- HEADER DE ESTADO (ORDEN INVERTIDO) -->
     <?php if ($isFiltered): ?>
-    <div class="bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800/50 px-4 py-2 flex items-center justify-center gap-2 shrink-0">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-        </span>
-        <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-widest">
-            Vista Filtrada Activa
-        </span>
+    <div class="bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800/50 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0 transition-all">
+        
+        <!-- IZQUIERDA: INDICADOR VISUAL -->
+        <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+            </span>
+            <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-widest">
+                Vista Filtrada
+            </span>
+        </div>
+
+        <!-- DERECHA: BOTÓN DE BORRAR -->
+        <a href="contracts" 
+           class="flex items-center gap-2 text-xs font-bold text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors group"
+           title="Eliminar todos los filtros">
+            <span class="underline decoration-dotted underline-offset-2 hidden sm:inline">Borrar Filtros</span>
+            <div class="p-1.5 bg-white dark:bg-slate-800 rounded-md shadow-sm border border-red-100 dark:border-red-900/30 group-hover:border-red-300">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </div>
+        </a>
+
     </div>
     <?php endif; ?>
 
@@ -520,12 +535,6 @@ if (!empty($_GET['filter'])) {
                     <!-- Columna 1: Documento -->
                     <th class="p-4 w-1/3 text-left">
                         <div class="flex items-center gap-2">
-                            <?php if(!empty($activeFilters)): ?>
-                                <span class="flex h-2 w-2 relative">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                                </span>
-                            <?php endif; ?>
                             Documento
                         </div>
                     </th>
@@ -533,19 +542,14 @@ if (!empty($_GET['filter'])) {
                     <th class="p-4 text-left">Estado / Categoría</th>
                     <th class="p-4 text-left">Solicitante</th>
                     
-                    <!-- Columna 4: FECHA + ACCIONES -->
+                    <!-- Columna 4: FECHA (LIMPIA) -->
                     <th class="p-4 text-right">
                         <div class="flex items-center justify-end gap-3">
                             <span>Fecha</span>
                             
-                            <?php if (!empty($activeFilters)): ?>
-                                <a href="contracts" 
-                                   class="group flex items-center justify-center w-6 h-6 rounded-full bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition-all duration-300 shadow-sm ring-1 ring-red-100 hover:ring-red-500"
-                                   data-tooltip="Limpiar filtros"
-                                   data-color="bg-red-600">
-                                    <i data-lucide="filter-x" class="w-3.5 h-3.5"></i>
-                                </a>
-                            <?php else: ?>
+                            <!-- Solo mostramos botón de Refrescar si NO hay filtros (Modo normal) -->
+                            <!-- Si hay filtros, la acción de limpiar ya está en la barra superior -->
+                            <?php if (empty($activeFilters)): ?>
                                 <a href="contracts" 
                                    class="group flex items-center justify-center w-6 h-6 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-all duration-300"
                                    data-tooltip="Actualizar lista"

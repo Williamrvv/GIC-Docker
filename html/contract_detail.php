@@ -1531,7 +1531,7 @@ require 'includes/header.php';
                 document.getElementById('modalArchiveBlocked').classList.add('hidden');
                 
                 // Mostrar Toast Personalizado
-                showToast("Recordatorio Enviado", "Se notificó al solicitante por correo.");
+                window.showToast('success', "Recordatorio Enviado", "Se notificó al solicitante por correo.");
             } else {
                 alert("Error: " + (data.error || "No se pudo enviar el correo."));
             }
@@ -1546,33 +1546,6 @@ require 'includes/header.php';
         }
     }
 
-    // Helper para mostrar Toast dinámicamente (Si no existe, lo crea)
-    function showToast(title, msg) {
-        // Eliminar existente si hay
-        const old = document.getElementById('dynamicToast');
-        if(old) old.remove();
-
-        const toastHTML = `
-            <div id="dynamicToast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 z-[70] animate-fade-in-up border border-purple-400">
-                <div class="p-2 bg-white/20 rounded-full"><i data-lucide="mail-check" class="w-6 h-6 text-white"></i></div>
-                <div><h4 class="font-bold text-sm">${title}</h4><p class="text-xs text-purple-100">${msg}</p></div>
-                <button onclick="this.parentElement.remove()" class="ml-2 hover:bg-white/20 p-1 rounded-lg"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>`;
-        
-        document.body.insertAdjacentHTML('beforeend', toastHTML);
-        if(typeof lucide !== 'undefined') lucide.createIcons();
-
-        // Auto-cierre
-        setTimeout(() => {
-            const t = document.getElementById('dynamicToast');
-            if(t) {
-                t.style.transition = "opacity 0.5s, transform 0.5s";
-                t.style.opacity = '0';
-                t.style.transform = "translate(-50%, -20px)";
-                setTimeout(() => t.remove(), 500);
-            }
-        }, 4000);
-    }
 </script>
 
 <?php require 'includes/footer.php'; ?>

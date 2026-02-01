@@ -319,3 +319,88 @@ function forceHideTooltip() {
         tooltip.style.left = '-5000px';
     }
 }
+
+// ==========================================
+// SISTEMA DE NOTIFICACIONES UNIFICADO (TOASTS)
+// ==========================================
+
+// Contenedor de Toasts (Lo crea si no existe)
+function getToastContainer() {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        // Posición: Arriba Derecha, flotante, z-index máximo
+        container.className = 'fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none';
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+window.showToast = function(type, title, message) {
+    const container = getToastContainer();
+    
+    // Configuración de Estilos según Tipo
+    const config = {
+        success: {
+            icon: 'check-circle',
+            bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+            border: 'border-emerald-500',
+            text: 'text-emerald-800 dark:text-emerald-200',
+            iconColor: 'text-emerald-500'
+        },
+        error: {
+            icon: 'alert-octagon',
+            bg: 'bg-rose-50 dark:bg-rose-900/30',
+            border: 'border-rose-500',
+            text: 'text-rose-800 dark:text-rose-200',
+            iconColor: 'text-rose-500'
+        },
+        warning: {
+            icon: 'alert-triangle',
+            bg: 'bg-amber-50 dark:bg-amber-900/30',
+            border: 'border-amber-500',
+            text: 'text-amber-800 dark:text-amber-200',
+            iconColor: 'text-amber-500'
+        },
+        info: {
+            icon: 'info',
+            bg: 'bg-blue-50 dark:bg-blue-900/30',
+            border: 'border-blue-500',
+            text: 'text-blue-800 dark:text-blue-200',
+            iconColor: 'text-blue-500'
+        }
+    };
+
+    const style = config[type] || config.info;
+
+    // Crear Elemento HTML
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-2xl border-l-4 ${style.border} ${style.bg} backdrop-blur-md min-w-[300px] max-w-md transform transition-all duration-500 translate-x-full opacity-0`;
+    
+    toast.innerHTML = `
+        <i data-lucide="${style.icon}" class="w-6 h-6 ${style.iconColor} shrink-0 mt-0.5"></i>
+        <div class="flex-1">
+            <h4 class="font-bold text-sm ${style.text}">${title}</h4>
+            <p class="text-xs opacity-90 ${style.text} mt-1 leading-relaxed">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    `;
+
+    // Insertar
+    container.appendChild(toast);
+    if(typeof lucide !== 'undefined') lucide.createIcons();
+
+    // Animación Entrada
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+    });
+
+    // Auto-cierre (5 segundos)
+    setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0'); // Salida
+        setTimeout(() => toast.remove(), 500); // Eliminar del DOM
+    }, 5000);
+};

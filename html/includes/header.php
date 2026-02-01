@@ -16,8 +16,8 @@ $inactiveClass = "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hov
     <!-- Favicon -->
     <link rel="icon" href="assets/img/favicon.png" type="image/png">
     
-    <!-- Configuración Tailwind para Dark Mode -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (Versión Estable Reciente con soporte Ring/Shadow avanzado) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,container-queries"></script>
     <script>
         tailwind.config = {
             darkMode: 'class', // Activación manual
@@ -55,6 +55,65 @@ $inactiveClass = "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hov
         
         /* El logo espera 0.2s antes de caer */
         .animate-logo { animation: floatDown 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0; animation-delay: 0.2s; }
+    </style>
+    <style>
+        /* ANIMACIONES */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-entry { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
+        
+        /* TRANSICIONES DE TEMA */
+        body, main, aside, div, tr, td, th, input, select, textarea { 
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; 
+        }
+
+        /* ========================================= */
+        /* SCROLLBAR GLOBAL (CHROME, EDGE, SAFARI)   */
+        /* ========================================= */
+        
+        /* Aplica a TODO elemento scrollable en el sitio */
+        ::-webkit-scrollbar {
+            width: 8px;  /* Grosor vertical */
+            height: 8px; /* Grosor horizontal */
+        }
+
+        /* El riel (fondo) */
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+
+        /* La barra (thumb) */
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* Gris suave (Modo Claro) */
+            border-radius: 20px;       /* Píldora redondeada */
+            border: 2px solid transparent; /* Truco para crear "margen" alrededor */
+            background-clip: content-box;
+        }
+
+        /* Al pasar el mouse sobre la barra */
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8;
+        }
+
+        /* ========================================= */
+        /* MODO OSCURO                               */
+        /* ========================================= */
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: #475569; /* Gris oscuro (Modo Oscuro) */
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b;
+        }
+
+        /* ========================================= */
+        /* SOPORTE FIREFOX                           */
+        /* ========================================= */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .dark html {
+            scrollbar-color: #475569 transparent;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-slate-900 flex overflow-hidden text-slate-800 dark:text-slate-100 font-sans">

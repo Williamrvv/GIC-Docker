@@ -126,13 +126,6 @@ require 'includes/header.php';
     </button>
 </div>
 
-<!-- ALERTAS -->
-<?php if(isset($_GET['msg'])): ?>
-    <div id="alert-box" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded animate-entry">Operación realizada con éxito.</div>
-    <script>setTimeout(() => document.getElementById('alert-box').style.display='none', 4000);</script>
-<?php endif; ?>
-<?php if($error): ?><div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded"><?= $error ?></div><?php endif; ?>
-
 <!-- BARRA DE FILTROS -->
 <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6 animate-entry">
     <form method="GET" class="flex flex-col md:flex-row gap-4 items-end">

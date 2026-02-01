@@ -18,7 +18,7 @@
         <p id="globalLoaderSub" class="text-slate-300 text-sm">Por favor espere, no cierre la ventana.</p>
     </div>
 
-<!-- ======================================================= -->
+    <!-- ======================================================= -->
     <!-- LIBRERÍAS GLOBALES (CDN JSDelivr)         -->
     <!-- ======================================================= -->
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
@@ -54,15 +54,15 @@
         };
     </script>
     
-<!-- DEBUGGER DE CORREOS -->
-<?php if (isset($_SESSION['mail_debug']) && !empty($_SESSION['mail_debug'])): ?>
-    <script>
-        console.group("📧 GIC SMTP Debugger");
-        console.table(<?php echo json_encode($_SESSION['mail_debug']); ?>);
-        console.groupEnd();
-    </script>
-    <?php unset($_SESSION['mail_debug']); ?>
-<?php endif; ?>
+    <!-- DEBUGGER DE CORREOS -->
+    <?php if (isset($_SESSION['mail_debug']) && !empty($_SESSION['mail_debug'])): ?>
+        <script>
+            console.group("📧 GIC SMTP Debugger");
+            console.table(<?php echo json_encode($_SESSION['mail_debug']); ?>);
+            console.groupEnd();
+        </script>
+        <?php unset($_SESSION['mail_debug']); ?>
+    <?php endif; ?>
 
     <!-- ========================================== -->
     <!-- TOOLTIP GLOBAL                             -->
@@ -125,6 +125,51 @@
             });
         });
     </script>
+    
+    <!-- LÓGICA AUTOMÁTICA DE NOTIFICACIONES PHP -> JS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // 1. DICCIONARIO DE MENSAJES (Mapeo de 'msg' a textos bonitos)
+            const messages = {
+                'created':       { type: 'success', title: 'Creación Exitosa', text: 'El registro ha sido creado correctamente.' },
+                'updated':       { type: 'success', title: 'Actualización Exitosa', text: 'Los datos se han guardado correctamente.' },
+                'deleted':       { type: 'success', title: 'Eliminado', text: 'El registro ha sido eliminado del sistema.' },
+                'uploaded':      { type: 'success', title: 'Carga Completa', text: 'El documento se subió y encriptó correctamente.' },
+                'signed':        { type: 'success', title: 'Firma Registrada', text: 'El documento firmado ha sido procesado.' },
+                'cancelled':     { type: 'warning', title: 'Anulado', text: 'El contrato ha sido marcado como anulado.' },
+                'status_changed':{ type: 'info',    title: 'Estado Actualizado', text: 'El flujo ha avanzado a la siguiente etapa.' },
+                'reminder_sent': { type: 'success', title: 'Correo Enviado', text: 'Se ha notificado al usuario correctamente.' },
+                'annex_requested':{ type: 'info',   title: 'Solicitud Enviada', text: 'Se ha pedido al usuario cargar los anexos.' },
+                'annex_uploaded': { type: 'success', title: 'Anexo Recibido', text: 'Documento anexo guardado exitosamente.' },
+                'annex_deleted':  { type: 'warning', title: 'Anexo Eliminado', text: 'El documento adjunto ha sido borrado.' }
+            };
 
+            // 2. DETECTAR 'msg' (Éxito/Info)
+            if (urlParams.has('msg')) {
+                const key = urlParams.get('msg');
+                if (messages[key]) {
+                    const m = messages[key];
+                    window.showToast(m.type, m.title, m.text);
+                } else if (key === 'activated') {
+                    window.showToast('success', 'Usuario Activado', 'Acceso al sistema habilitado.');
+                } else if (key === 'deactivated') {
+                    window.showToast('warning', 'Usuario Desactivado', 'Acceso revocado temporalmente.');
+                }
+            }
+
+            // 3. DETECTAR 'error' (Mensajes directos de error)
+            if (urlParams.has('error')) {
+                window.showToast('error', 'Error del Sistema', decodeURIComponent(urlParams.get('error')));
+            }
+
+            // 4. LIMPIEZA DE URL (Para que no salga la alerta al refrescar)
+            if (urlParams.has('msg') || urlParams.has('error')) {
+                const newUrl = window.location.pathname + window.location.search.replace(/[\?&](msg|error)=[^&]+/, '').replace(/^&/, '?');
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        });
+    </script>
 </body>
 </html>

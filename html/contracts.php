@@ -198,6 +198,105 @@ $statusConfig = [
 $pageTitle = "Contratos"; require 'includes/header.php';
 ?>
 
+
+<?php
+// === LÓGICA DE UI: FILTROS ACTIVOS (PREMIUM & DASHBOARD SUPPORT) ===
+$activeFilters = [];
+
+// Helper para limpiar URL
+function getUrlWithout($param) {
+    $params = $_GET;
+    unset($params[$param]);
+    unset($params['page']); 
+    return '?' . http_build_query($params);
+}
+
+// 1. BÚSQUEDA
+if (!empty($_GET['q'])) {
+    $activeFilters[] = [
+        'icon'  => 'search',
+        'label' => '"' . htmlspecialchars($_GET['q']) . '"',
+        'url'   => getUrlWithout('q'),
+        'style' => 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800'
+    ];
+}
+
+// 2. ESTADO
+if (!empty($_GET['status_filter'])) {
+    $label = $statusConfig[$_GET['status_filter']]['label'] ?? $_GET['status_filter'];
+    $activeFilters[] = [
+        'icon'  => 'activity',
+        'label' => $label,
+        'url'   => getUrlWithout('status_filter'),
+        'style' => 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800'
+    ];
+}
+
+// 3. CATEGORÍA
+if (!empty($_GET['category_filter'])) {
+    $activeFilters[] = [
+        'icon'  => 'tag',
+        'label' => htmlspecialchars($_GET['category_filter']),
+        'url'   => getUrlWithout('category_filter'),
+        'style' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
+    ];
+}
+
+// 4. PRIORIDAD
+if (!empty($_GET['priority_filter'])) {
+    $prioLabels = ['HIGH'=>'Alta', 'MEDIUM'=>'Media', 'LOW'=>'Baja'];
+    $activeFilters[] = [
+        'icon'  => 'flame',
+        'label' => 'Prioridad: ' . ($prioLabels[$_GET['priority_filter']] ?? $_GET['priority_filter']),
+        'url'   => getUrlWithout('priority_filter'),
+        'style' => 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800'
+    ];
+}
+
+// 5. USUARIO
+if (!empty($_GET['user_filter'])) {
+    $activeFilters[] = [
+        'icon'  => 'user',
+        'label' => htmlspecialchars($_GET['user_filter']),
+        'url'   => getUrlWithout('user_filter'),
+        'style' => 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800'
+    ];
+}
+
+// 6. FILTROS ESPECIALES (DASHBOARD/URL DIRECTA) - ¡NUEVO!
+if (!empty($_GET['filter'])) {
+    $f = $_GET['filter'];
+    $chip = null;
+
+    switch ($f) {
+        case 'active':
+            $chip = ['label' => 'Solo Activos', 'icon' => 'play-circle', 'style' => 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'];
+            break;
+        case 'risk':
+            $chip = ['label' => 'Con Riesgos', 'icon' => 'alert-triangle', 'style' => 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300'];
+            break;
+        case 'priority_high':
+            $chip = ['label' => 'Alta Prioridad (Global)', 'icon' => 'flame', 'style' => 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300'];
+            break;
+        case 'ARCHIVED':
+            $chip = ['label' => 'Archivo Histórico', 'icon' => 'archive', 'style' => 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400'];
+            break;
+        case 'action_required':
+            $chip = ['label' => 'Tu Atención Requerida', 'icon' => 'bell-ring', 'style' => 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300'];
+            break;
+    }
+
+    if ($chip) {
+        $activeFilters[] = [
+            'icon'  => $chip['icon'],
+            'label' => $chip['label'],
+            'url'   => getUrlWithout('filter'),
+            'style' => $chip['style']
+        ];
+    }
+}
+?>
+
 <div class="flex flex-col gap-4 mb-6 animate-entry">
     <div class="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
@@ -271,6 +370,13 @@ $pageTitle = "Contratos"; require 'includes/header.php';
                 <i data-lucide="filter" class="w-4 h-4"></i> Filtros
             </button>
             
+            <!-- BOTÓN EXPORTAR EXCEL -->
+            <button onclick="window.location.href='export_excel.php'+window.location.search" 
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                    title="Descargar reporte según filtros actuales">
+                <i data-lucide="sheet" class="w-4 h-4"></i> <span class="hidden sm:inline">Excel</span>
+            </button>
+
             <!-- BOTÓN NUEVO -->
             <button onclick="window.openContractModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-transform active:scale-95">
                 <i data-lucide="plus"></i> <span class="hidden sm:inline">Nuevo</span>
@@ -334,71 +440,148 @@ $pageTitle = "Contratos"; require 'includes/header.php';
             <div class="flex gap-2 md:col-span-2 justify-end">
                 <button type="submit" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">Aplicar Filtros</button>
                 <?php if(!empty($_GET)): ?>
-                    <a href="contracts" class="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i> Limpiar</a>
+                    <!-- <a href="contracts" class="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i> Limpiar</a> -->
                 <?php endif; ?>
             </div>
         </form>
     </div>
 </div>
 
-<?php if(isset($_GET['msg']) && $_GET['msg'] == 'created'): ?>
-    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded animate-entry">Contrato creado y asegurado exitosamente.</div>
-<?php endif; ?>
-<?php if(isset($error)): ?><div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded animate-entry"><?= $error ?></div><?php endif; ?>
+<!-- CHIPS DE FILTROS ACTIVOS (DISEÑO MODERNO) -->
+<?php if (!empty($activeFilters)): ?>
+    <div class="flex flex-wrap items-center gap-2 mb-5 animate-fade-in-up px-1">
+        
+        <!-- Label sutil -->
+        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1 select-none">
+            <i data-lucide="filter" class="w-3 h-3"></i> Filtros:
+        </span>
+        
+        <?php foreach ($activeFilters as $filter): ?>
+            <a href="<?= $filter['url'] ?>" 
+               class="group relative flex items-center gap-2 px-3 py-1 text-xs font-bold rounded-full border shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 <?= $filter['style'] ?>"
+               title="Clic para remover filtro">
+                
+                <!-- Ícono del tipo de filtro -->
+                <i data-lucide="<?= $filter['icon'] ?>" class="w-3 h-3 opacity-70 group-hover:hidden"></i>
+                
+                <!-- Ícono de cerrar (Aparece al hover) -->
+                <i data-lucide="x" class="w-3 h-3 hidden group-hover:block text-current"></i>
+                
+                <span><?= $filter['label'] ?></span>
+            </a>
+        <?php endforeach; ?>
 
-<!-- LISTA DE CONTRATOS -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden animate-entry">
-    <div class="overflow-x-auto">
+    </div>
+<?php endif; ?>
+
+
+<!-- CONTENEDOR PRINCIPAL (Estilos y Bordes) -->
+<div class="<?= $containerClass ?> rounded-2xl animate-entry transition-all duration-300 relative flex flex-col">   
+    
+    <!-- LISTA DE CONTRATOS (CONTENEDOR DINÁMICO) -->
+<?php
+    $isFiltered = !empty($activeFilters);
+    
+    if ($isFiltered) {
+        $theadClass = "bg-gradient-to-r from-blue-50 via-white to-white dark:from-blue-900/40 dark:via-slate-900/50 dark:to-slate-900/50 text-blue-700 dark:text-blue-300 border-b border-blue-100 dark:border-blue-800/50";
+        $iconClass = "text-blue-500 animate-pulse"; // El ícono de la columna se moverá sutilmente
+    } else {
+        $theadClass = "bg-slate-50 dark:bg-slate-900/50 text-slate-500 border-b border-gray-100 dark:border-slate-700";
+        $iconClass = "text-slate-400";
+    }
+?>
+
+<!-- LISTA DE CONTRATOS (CONTENEDOR MEJORADO + STICKY FIX) -->
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden animate-entry flex flex-col">
+    
+    <!-- HEADER DE ESTADO (Solo si hay filtros) -->
+    <?php if ($isFiltered): ?>
+    <div class="bg-indigo-50/50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800/50 px-4 py-2 flex items-center justify-center gap-2 shrink-0">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+        </span>
+        <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-widest">
+            Vista Filtrada Activa
+        </span>
+    </div>
+    <?php endif; ?>
+
+    <!-- CONTENEDOR DE SCROLL (AQUÍ ESTÁ LA MAGIA) -->
+    <!-- max-h-[70vh]: Define la altura máxima para que el scroll ocurra AQUÍ y el sticky funcione -->
+    <div class="overflow-auto max-h-[70vh] w-full custom-scrollbar">
         <table class="w-full text-left border-collapse">
-            <thead class="bg-slate-50 dark:bg-slate-900/50 text-xs uppercase text-slate-500 font-bold">
-                <tr><th class="p-4">Documento</th><th class="p-4">Estado / Categoría</th><th class="p-4">Solicitante</th><th class="p-4 text-right">Fecha</th></tr>
+            
+            <!-- HEADER STICKY -->
+            <!-- z-20: Encima de las filas -->
+            <!-- bg-slate-50: Fondo sólido para tapar el contenido al scrollear -->
+            <thead class="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-xs uppercase text-slate-500 font-bold border-b border-gray-200 dark:border-slate-700 shadow-sm">
+                <tr>
+                    <!-- Columna 1: Documento -->
+                    <th class="p-4 w-1/3 text-left">
+                        <div class="flex items-center gap-2">
+                            <?php if(!empty($activeFilters)): ?>
+                                <span class="flex h-2 w-2 relative">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                </span>
+                            <?php endif; ?>
+                            Documento
+                        </div>
+                    </th>
+                    
+                    <th class="p-4 text-left">Estado / Categoría</th>
+                    <th class="p-4 text-left">Solicitante</th>
+                    
+                    <!-- Columna 4: FECHA + ACCIONES -->
+                    <th class="p-4 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <span>Fecha</span>
+                            
+                            <?php if (!empty($activeFilters)): ?>
+                                <a href="contracts" 
+                                   class="group flex items-center justify-center w-6 h-6 rounded-full bg-red-50 hover:bg-red-500 text-red-500 hover:text-white transition-all duration-300 shadow-sm ring-1 ring-red-100 hover:ring-red-500"
+                                   data-tooltip="Limpiar filtros"
+                                   data-color="bg-red-600">
+                                    <i data-lucide="filter-x" class="w-3.5 h-3.5"></i>
+                                </a>
+                            <?php else: ?>
+                                <a href="contracts" 
+                                   class="group flex items-center justify-center w-6 h-6 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-all duration-300"
+                                   data-tooltip="Actualizar lista"
+                                   data-color="bg-slate-800">
+                                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </th>
+                </tr>
             </thead>
+            
             <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                 <?php foreach($contracts as $c): ?>
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group" onclick="window.location.href='contract_detail?id=<?= $c['id'] ?>'">
                     
                     <td class="p-4 align-top">
                         <div class="flex items-start gap-3">
-                            <!-- ÍCONO PRIORIDAD -->
                             <div class="mt-1">
                                 <?php 
                                     $prioLabel = $c['priority'] == 'HIGH' ? 'Prioridad: Alta' : ($c['priority'] == 'LOW' ? 'Prioridad: Baja' : 'Prioridad: Media');
-                                    
-                                    if ($c['priority'] == 'HIGH') 
-                                        echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="flame" class="text-red-500 w-5 h-5 cursor-help"></i>';
-                                    elseif ($c['priority'] == 'LOW') 
-                                        echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="arrow-down" class="text-slate-400 w-5 h-5 cursor-help"></i>';
-                                    else 
-                                        echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="file-text" class="text-blue-500 w-5 h-5 cursor-help"></i>';
+                                    if ($c['priority'] == 'HIGH') echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="flame" class="text-red-500 w-5 h-5 cursor-help"></i>';
+                                    elseif ($c['priority'] == 'LOW') echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="arrow-down" class="text-slate-400 w-5 h-5 cursor-help"></i>';
+                                    else echo '<i data-tooltip="'.$prioLabel.'" data-color="bg-slate-800" data-lucide="file-text" class="text-blue-500 w-5 h-5 cursor-help"></i>';
                                 ?>
                             </div>
-
-                            <!-- DATOS DEL CONTRATO CON TOOLTIPS -->
                             <div>
-                                <!-- 1. TÍTULO -->
-                                <h4 class="font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors text-sm w-fit cursor-help"
-                                    data-tooltip="Título del Contrato">
+                                <h4 class="font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors text-sm w-fit cursor-help" data-tooltip="Título del Contrato">
                                     <?= htmlspecialchars($c['title']) ?>
-                                    
                                     <?php if($c['has_red_flags']): ?>
-                                        <span class="inline-block w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ml-1"
-                                              data-tooltip="Riesgos Detectados"
-                                              data-color="bg-red-600">
-                                        </span>
+                                        <span class="inline-block w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ml-1" data-tooltip="Riesgos Detectados" data-color="bg-red-600"></span>
                                     <?php endif; ?>
                                 </h4>
-
-                                <!-- 2. CÓDIGO (ID) -->
-                                <span class="text-xs text-slate-400 font-mono block w-fit cursor-help mt-0.5"
-                                      data-tooltip="Código de Referencia">
-                                    <?= $c['id'] ?>
-                                </span>
-
-                                <!-- 3. PROVEEDOR -->
-                                <p class="text-xs text-slate-500 mt-1 w-fit cursor-help flex items-center gap-1"
-                                   data-tooltip="Proveedor / Contraparte">
-                                   <i data-lucide="building-2" class="w-3 h-3"></i>
-                                   <?= htmlspecialchars($c['supplier']) ?>
+                                <span class="text-xs text-slate-400 font-mono block w-fit cursor-help mt-0.5" data-tooltip="Código de Referencia"><?= $c['id'] ?></span>
+                                <p class="text-xs text-slate-500 mt-1 w-fit cursor-help flex items-center gap-1" data-tooltip="Proveedor / Contraparte">
+                                   <i data-lucide="building-2" class="w-3 h-3"></i> <?= htmlspecialchars($c['supplier']) ?>
                                 </p>
                             </div>
                         </div>
@@ -407,32 +590,18 @@ $pageTitle = "Contratos"; require 'includes/header.php';
                     <td class="p-4 align-top">
                         <div class="flex flex-col items-start gap-1.5">
                             <?php if ($c['waiting_for_annexes'] == 1): ?>
-                                <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" title="El solicitante debe cargar documentos anexos">
-                                    <i data-lucide="files" class="w-3 h-3"></i> Faltan Anexos
-                                </span>
+                                <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" title="El solicitante debe cargar documentos anexos"><i data-lucide="files" class="w-3 h-3"></i> Faltan Anexos</span>
                             <?php endif; ?>
                             <?php $conf = $statusConfig[$c['status']] ?? $statusConfig['UNREVIEWED']; ?>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide <?= $conf['class'] ?>">
-                                <?= $conf['label'] ?>
-                            </span>
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide <?= $conf['class'] ?>"><?= $conf['label'] ?></span>
                             
-                            <!-- INDICADOR DE TURNO -->
                             <?php if ($c['status'] == 'OBSERVATIONS'): ?>
                                 <?php if ($c['observation_turn'] == 'USER'): ?>
-                                    <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/30 cursor-help"
-                                          data-tooltip="Usuario solicitante debe responder observaciones"
-                                          data-color="bg-orange-700">
-                                        <i data-lucide="user" class="w-3 h-3"></i> Espera Solicitante
-                                    </span>
+                                    <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/30 cursor-help" data-tooltip="Usuario solicitante debe responder" data-color="bg-orange-700"><i data-lucide="user" class="w-3 h-3"></i> Espera Solicitante</span>
                                 <?php elseif ($c['observation_turn'] == 'LEGAL'): ?>
-                                    <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30 cursor-help"
-                                          data-tooltip="El abogado está revisando cambios"
-                                          data-color="bg-blue-700">
-                                        <i data-lucide="scale" class="w-3 h-3"></i> Espera Legal
-                                    </span>
+                                    <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30 cursor-help" data-tooltip="El abogado está revisando cambios" data-color="bg-blue-700"><i data-lucide="scale" class="w-3 h-3"></i> Espera Legal</span>
                                 <?php endif; ?>
                             <?php endif; ?>
-
                             <span class="text-[11px] px-2 py-0.5 rounded border bg-gray-50 text-slate-500 border-gray-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"><?= htmlspecialchars($c['category']) ?></span>
                         </div>
                     </td>
@@ -451,7 +620,7 @@ $pageTitle = "Contratos"; require 'includes/header.php';
     </div>
     
     <?php if($totalPages > 1): ?>
-    <div class="p-4 border-t border-gray-100 dark:border-slate-700 flex justify-center gap-1 flex-wrap">
+    <div class="p-4 border-t border-gray-100 dark:border-slate-700 flex justify-center gap-1 flex-wrap shrink-0 bg-white dark:bg-slate-800 z-20 relative">
         <?php
         $q = $_GET; unset($q['page']); $lnk = "?" . (http_build_query($q) ? http_build_query($q).'&' : '') . "page=";
         if($page > 1) echo "<a href='{$lnk}".($page-1)."' class='px-3 py-1 text-sm rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'>&laquo;</a>";

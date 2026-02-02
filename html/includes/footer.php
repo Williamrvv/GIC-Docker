@@ -1,6 +1,71 @@
 </div> <!-- Fin de max-w-7xl -->
     </main> <!-- Fin de Main -->
 
+
+
+    <!-- MODAL DE CARGA -->
+    <div id="modalContract" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="window.closeContractModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
+                <div class="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="sparkles" class="text-purple-500"></i> Nuevo Contrato</h3>
+                    <button onclick="window.closeContractModal()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto p-6 space-y-5" id="contractForm" onsubmit="window.showLoading('Creando Contrato', 'Encriptando archivo y enviando notificaciones iniciales...')">
+                    <input type="hidden" name="action" value="create">
+                    <input type="hidden" name="red_flag_count" id="aiFlagCount" value="0">
+                    <input type="hidden" name="red_flag_details" id="aiFlagDetails" value="">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Documento</label>
+                        <div class="flex gap-3">
+                            <div class="relative flex-1 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                                <div class="flex items-center justify-center gap-3"><i data-lucide="file-up" class="w-6 h-6 text-blue-500"></i><span id="fileNameDisplay" class="text-sm text-slate-500">PDF, DOCX o Imagen...</span></div>
+                                <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.doc,image/*" required class="hidden" onchange="window.handleFileSelect(this)">
+                            </div>
+                            <button type="button" id="btnAnalyze" onclick="analyzeDocument()" disabled class="bg-purple-600 disabled:bg-purple-300 hover:bg-purple-700 text-white px-4 rounded-xl flex items-center gap-2 shadow-lg"><i data-lucide="bot"></i> Analizar</button>
+                        </div>
+                    </div>
+
+                    <div id="aiLoading" class="hidden bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800 flex items-center gap-3"><i data-lucide="loader" class="animate-spin text-purple-600"></i><span class="text-sm text-purple-700 dark:text-purple-300">Analizando documento...</span></div>
+                    <div id="aiError" class="hidden bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800 mb-4"><h4 class="font-bold text-orange-700 dark:text-orange-300 text-sm flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Error</h4><p class="text-xs text-orange-600 dark:text-orange-400 mt-1">No se pudo analizar. Complete manualmente.</p></div>
+                    <div id="aiResults" class="hidden bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800"><h4 class="font-bold text-red-700 dark:text-red-300 text-sm flex items-center gap-2 mb-1"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Red Flags: <span id="displayFlagCount">0</span></h4><p id="displayFlagDetails" class="text-xs text-red-600 dark:text-red-400 mt-1"></p></div>
+
+                    <fieldset id="formFields" class="space-y-4">
+                        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label><input type="text" name="title" id="inputTitle" required class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Proveedor</label><input type="text" name="supplier" id="inputSupplier" required class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
+                                <select name="category" id="inputCategory" required class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Seleccionar...</option>
+                                    <?php foreach($categories as $cat): ?>
+                                        <option value="<?= $cat ?>"><?= $cat ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Resumen (IA)</label><textarea name="summary" id="inputSummary" rows="2" class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea></div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prioridad</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer dark:text-white"><input type="radio" name="priority" value="LOW" class="text-blue-600"> <span class="text-sm">Baja</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer dark:text-white"><input type="radio" name="priority" value="MEDIUM" checked class="text-blue-600"> <span class="text-sm">Media</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer dark:text-white"><input type="radio" name="priority" value="HIGH" class="text-red-600"> <span class="text-sm font-bold text-red-500">Alta</span></label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-slate-800">
+                        <button type="button" onclick="window.closeContractModal()" class="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancelar</button>
+                        <button type="submit" id="btnSave" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all font-medium">Guardar Contrato</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     <!-- ============================================ -->
     <!-- BLOQUEADOR DE PANTALLA (LOADING OVERLAY)     -->
     <!-- ============================================ -->

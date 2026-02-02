@@ -78,7 +78,7 @@ FORMATO JSON OBLIGATORIO:
     \"title\": \"Título corto del contrato\",
     \"supplier\": \"Nombre del Proveedor detectado\",
     \"category\": \"Servicios\",  <-- AQUÍ DEBE IR UNA DE LAS 3 OPCIONES EXACTAS
-    \"date\": \"YYYY-MM-DD\",  
+    \"date\": \"YYYY-MM-DD\", 
     \"summary\": \"Resumen ejecutivo de 2 líneas.\",
     \"red_flags\": {
         \"count\": (int),

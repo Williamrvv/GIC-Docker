@@ -3,6 +3,7 @@ require 'db.php';
 require 'auth.php';
 require 'functions.php';
 requireLogin();
+$categories = getCategories($pdo);
 
 // SEGURIDAD: Solo Admin o Legal
 if (!hasRole(['SUPER_ADMIN', 'LEGAL'])) {
@@ -196,9 +197,9 @@ require 'includes/header.php';
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría <span class="text-red-500">*</span></label>
                         <select name="category" id="inputCategory" required class="w-full bg-slate-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
                             <option value="" disabled selected>Seleccionar...</option>
-                            <option value="Servicios">Servicios</option>
-                            <option value="Alquiler de oficinas">Alquiler de oficinas</option>
-                            <option value="Otro">Otro</option>
+                            <?php foreach($categories as $cat): ?>
+                                <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>

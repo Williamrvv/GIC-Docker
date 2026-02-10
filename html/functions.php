@@ -371,4 +371,18 @@ function sendSmtpMail($to, $subject, $body, $isHtml = true, $recipientName = '',
 
     return strpos($logEntry['Estado'], '✅') !== false;
 }
+
+// =============================================================
+// 5. HELPERS DE DATOS MAESTROS
+// =============================================================
+
+function getCategories($pdo) {
+    try {
+        $stmt = $pdo->query("SELECT name FROM categories WHERE is_active = 1 ORDER BY name ASC");
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {
+        // Fallback por si la tabla no existe aún
+        return ['Servicios', 'Alquiler de oficinas', 'Otro'];
+    }
+}
 ?>

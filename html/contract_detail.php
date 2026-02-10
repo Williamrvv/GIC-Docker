@@ -489,7 +489,7 @@ $allVersions = $pdo->query("SELECT * FROM contract_versions WHERE contract_id = 
 $allObs = $pdo->query("SELECT o.*, u.name, u.role FROM observations o JOIN users u ON o.user_id = u.id WHERE contract_id = '$id' ORDER BY created_at ASC")->fetchAll();
 $allLogs = $pdo->query("SELECT l.*, u.name FROM audit_logs l JOIN users u ON l.performed_by = u.id WHERE contract_id = '$id' ORDER BY timestamp DESC")->fetchAll();
 
-$categories = ['Servicios', 'Alquiler de oficinas', 'Otro'];
+$categories = getCategories($pdo);
 $states = ['UNREVIEWED', 'OBSERVATIONS', 'LEGAL_REVIEW_FINAL', 'SIGNATURE', 'ARCHIVED', 'CANCELLED'];
 $stateLabels = ['Sin Revisar', 'Observaciones', 'Rev. Legal', 'Firma', 'Archivado', 'Anulado'];
 $currentStateIdx = array_search(($contract['status'] == 'IN_REVIEW' ? 'UNREVIEWED' : $contract['status']), $states);

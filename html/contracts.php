@@ -7,8 +7,8 @@ requireLogin();
 $userId = $_SESSION['user_id'];
 $userRole = $_SESSION['role'];
 
-// CONFIGURACIÓN
-$categories = ['Servicios', 'Alquiler de oficinas', 'Otro'];
+// CONFIGURACIÓN (Desde BD)
+$categories = getCategories($pdo);
 
 // PAGINACIÓN
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;

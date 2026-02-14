@@ -40,9 +40,16 @@
                                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
                                 <select name="category" id="inputCategory" required class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="">Seleccionar...</option>
-                                    <?php foreach($categories as $cat): ?>
-                                        <option value="<?= $cat ?>"><?= $cat ?></option>
-                                    <?php endforeach; ?>
+                                    <?php 
+                                        if (!isset($categories)) {
+                                            $categories = (function_exists('getCategories') && isset($pdo)) 
+                                                ? getCategories($pdo) 
+                                                : ['Servicios', 'Alquiler de oficinas', 'Otro']; // Fallback de emergencia
+                                        }
+                                        foreach($categories as $cat): 
+                                    ?>
+                                    <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
+                                <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>

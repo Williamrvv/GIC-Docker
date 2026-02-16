@@ -913,9 +913,6 @@ require 'includes/header.php';
                             <i data-lucide="corner-down-right" class="w-3 h-3 inline mr-1"></i>
                             Ctrl + Enter, para enviar mensaje.
                         </p>
-                        <!-- <span class="text-[10px] font-bold text-slate-300 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
-                            Ctrl + Enter
-                        </span> -->
                     </div>
                 </form>
             </div>

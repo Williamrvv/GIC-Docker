@@ -894,7 +894,7 @@ require 'includes/header.php';
                             name="comment" 
                             required 
                             rows="5" 
-                            placeholder="Deja un comentario u observación, se notificará a los involucrados..." 
+                            placeholder="Deja un comentario u observación..." 
                             class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pr-14 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y custom-scrollbar shadow-inner placeholder:text-slate-400"
                             onkeydown="if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); this.form.requestSubmit(); }"
                         ></textarea>
@@ -913,9 +913,9 @@ require 'includes/header.php';
                             <i data-lucide="corner-down-right" class="w-3 h-3 inline mr-1"></i>
                             Ctrl + Enter, para enviar mensaje.
                         </p>
-                        <span class="text-[10px] font-bold text-slate-300 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
+                        <!-- <span class="text-[10px] font-bold text-slate-300 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
                             Ctrl + Enter
-                        </span>
+                        </span> -->
                     </div>
                 </form>
             </div>

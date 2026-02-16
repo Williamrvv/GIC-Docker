@@ -4,6 +4,24 @@ require 'auth.php';
 require 'functions.php';
 requireLogin();
 
+// Helper para renderizar formato estilo WhatsApp
+function formatComment($text) {
+    $html = htmlspecialchars($text);
+    // Negrita *texto*
+    $html = preg_replace('/\*(.*?)\*/', '<strong>$1</strong>', $html);
+    // Cursiva _texto_
+    $html = preg_replace('/_(.*?)_/', '<em>$1</em>', $html);
+    // Listas - item
+    $html = preg_replace('/^-\s+(.*)/m', '<li>$1</li>', $html);
+    // Envolver listas
+    if (strpos($html, '<li>') !== false) {
+        $html = "<ul class='list-disc list-inside space-y-1'>$html</ul>";
+        // Limpiar saltos de línea sobrantes alrededor de las listas
+        $html = preg_replace('/<\/ul>\s*<br \/>/', '</ul>', $html);
+    }
+    return nl2br($html);
+}
+
 $id = $_GET['id'] ?? '';
 $userId = $_SESSION['user_id'];
 $role = $_SESSION['role'];
@@ -15,6 +33,17 @@ $stmt = $pdo->prepare("SELECT c.*, u.name as initiator_name
                        WHERE c.id = ?");
 $stmt->execute([$id]);
 $contract = $stmt->fetch();
+
+// --- LÓGICA DE "VISTO" (READ RECEIPT) ---
+// 1. Obtener cuándo fue la última vez que vi este contrato (antes de entrar hoy)
+$stmtRead = $pdo->prepare("SELECT last_read_at FROM contract_reads WHERE user_id = ? AND contract_id = ?");
+$stmtRead->execute([$userId, $id]);
+$lastReadDate = $stmtRead->fetchColumn(); // Devuelve fecha o false si es la primera vez
+
+// 2. Marcar como visto AHORA (Upsert: Insertar o Actualizar)
+$stmtMark = $pdo->prepare("INSERT INTO contract_reads (user_id, contract_id, last_read_at) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE last_read_at = NOW()");
+$stmtMark->execute([$userId, $id]);
+// ---------------------------------------
 // --- INICIO AGREGADO ANEXOS ---
 $stmtAnn = $pdo->prepare("SELECT * FROM contract_annexes WHERE contract_id = ?");
 $stmtAnn->execute([$id]);
@@ -879,8 +908,78 @@ require 'includes/header.php';
                     <div class="max-w-[90%]"><div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mb-1 ml-1 flex items-center gap-1">IA GIC <span class="font-normal text-slate-400">• <?= date('d/m H:i', strtotime($contract['created_at'])) ?></span></div><div class="p-3.5 rounded-2xl rounded-tl-none text-sm bg-white dark:bg-slate-700 border border-purple-100 dark:border-purple-900 shadow-sm text-slate-700 dark:text-slate-200"><p class="font-bold text-red-500 mb-1 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Riesgos Detectados (<?= $contract['red_flag_count'] ?>):</p><?= nl2br(htmlspecialchars($contract['red_flag_details'])) ?></div></div>
                 </div>
                 <?php endif; ?>
-                <?php foreach($allObs as $obs): $isMe = $obs['user_id'] == $userId; ?>
-                <div class="flex gap-3 <?= $isMe ? 'flex-row-reverse' : '' ?>"><div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 <?= $obs['role'] == 'LEGAL' ? 'bg-indigo-600' : ($isMe ? 'bg-blue-600' : 'bg-slate-400') ?>"><?= substr($obs['name'], 0, 1) ?></div><div class="max-w-[85%]"><div class="text-[10px] text-slate-400 mb-1 px-1 <?= $isMe ? 'text-right' : '' ?>"><?= htmlspecialchars($obs['name']) ?> • <?= date('d/m H:i', strtotime($obs['created_at'])) ?></div><div class="p-3 rounded-2xl text-sm shadow-sm <?= $isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-tl-none border border-gray-200 dark:border-slate-600' ?>"><?= nl2br(htmlspecialchars($obs['comment_text'])) ?></div></div></div>
+                <!-- CHAT MEJORADO (Highlight + Leer Más) -->
+                <?php 
+                $totalObs = count($allObs);
+                foreach($allObs as $idx => $obs): 
+                    $isMe = $obs['user_id'] == $userId;
+                    $isLast = ($idx === $totalObs - 1);
+                    
+                    // Lógica de Visto/Nuevo
+                    $msgTime = strtotime($obs['created_at']);
+                    $readTime = $lastReadDate ? strtotime($lastReadDate) : 0;
+                    $isNew = !$isMe && ($msgTime > $readTime);
+                    
+                    $msgLen = strlen($obs['comment_text']);
+                    $isLong = $msgLen > 300 || substr_count($obs['comment_text'], "\n") > 4;
+                    $uniqueId = "msg_" . $obs['id'];
+                ?>
+                <div class="flex gap-3 mb-4 animate-fade-in-up <?= $isMe ? 'flex-row-reverse' : '' ?>">
+                    
+                    <!-- Avatar -->
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm relative <?= $obs['role'] == 'LEGAL' ? 'bg-indigo-600' : ($isMe ? 'bg-blue-600' : 'bg-slate-500') ?>">
+                        <?= substr($obs['name'], 0, 1) ?>
+                        <?php if($isNew): ?>
+                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white dark:border-slate-800"></span>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Burbuja -->
+                    <div class="max-w-[85%] relative group">
+                        
+                        <!-- Metadatos (Nombre y Fecha) - Ajustado a slate-500/400 para contraste -->
+                        <div class="flex items-center gap-2 mb-1 <?= $isMe ? 'flex-row-reverse' : '' ?>">
+                            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300"><?= htmlspecialchars($obs['name']) ?></span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400">• <?= date('d/m H:i', strtotime($obs['created_at'])) ?></span>
+                            <?php if($isNew): ?>
+                                <span class="text-[9px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded ml-1 animate-pulse">NUEVO</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Caja de Texto (ALTO CONTRASTE) -->
+                        <div class="p-3.5 rounded-2xl text-sm shadow-sm transition-all duration-300
+                                    <?= $isMe 
+                                        ? 'bg-blue-600 text-white rounded-tr-none'  // Si soy yo: Azul sólido, texto blanco
+                                        : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none border border-gray-200 dark:border-slate-700' // Si es otro: Fondo blanco/oscuro, texto Negro/Blanco
+                                    ?>
+                                    <?= $isNew ? 'ring-2 ring-red-100 dark:ring-red-900/30 shadow-md' : '' ?>">
+                            
+                            <div id="<?= $uniqueId ?>_content" class="relative <?= $isLong ? 'max-h-24 overflow-hidden' : '' ?> transition-all duration-500">
+                                <!-- Aplicamos clases de texto explícitas al contenido -->
+                                <div class="break-words leading-relaxed <?= $isMe ? 'text-white' : 'text-slate-800 dark:text-slate-100' ?>">
+                                    <?= formatComment($obs['comment_text']) ?>
+                                </div>
+                                
+                                <!-- Gradiente Fade (Ajustado a los colores de fondo) -->
+                                <?php if($isLong): ?>
+                                    <div id="<?= $uniqueId ?>_fade" class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t <?= $isMe ? 'from-blue-600' : 'from-white dark:from-slate-800' ?> to-transparent pointer-events-none"></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if($isLong): ?>
+                                <button onclick="toggleMessage('<?= $uniqueId ?>')" 
+                                        id="<?= $uniqueId ?>_btn"
+                                        class="mt-2 text-xs font-bold underline decoration-dotted underline-offset-2 hover:opacity-80 flex items-center gap-1 <?= $isMe ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' ?>">
+                                    Leer más <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                </button>
+                            <?php endif; ?>
+
+                        </div>
+                    </div>
+                </div>
                 <?php endforeach; ?>
             </div>
             
@@ -1584,6 +1683,28 @@ require 'includes/header.php';
             btn.innerHTML = originalText;
             if(typeof lucide !== 'undefined') lucide.createIcons();
         }
+    }
+
+    // UTILIDAD: LEER MÁS EN CHAT
+    function toggleMessage(id) {
+        const content = document.getElementById(id + '_content');
+        const fade = document.getElementById(id + '_fade');
+        const btn = document.getElementById(id + '_btn');
+        
+        if (content.classList.contains('max-h-24')) {
+            // EXPANDIR
+            content.classList.remove('max-h-24', 'overflow-hidden');
+            if(fade) fade.classList.add('hidden');
+            btn.innerHTML = 'Leer menos <i data-lucide="chevron-up" class="w-3 h-3 inline"></i>';
+        } else {
+            // COLAPSAR
+            content.classList.add('max-h-24', 'overflow-hidden');
+            if(fade) fade.classList.remove('hidden');
+            btn.innerHTML = 'Leer más <i data-lucide="chevron-down" class="w-3 h-3 inline"></i>';
+        }
+        
+        // Re-inicializar íconos
+        if(typeof lucide !== 'undefined') lucide.createIcons();
     }
 
 </script>

@@ -815,7 +815,8 @@ require 'includes/header.php';
     }
     </script>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden min-h-[500px] grid grid-cols-1 xl:grid-cols-3 animate-entry" style="animation-delay: 200ms;">
+    <!-- AUMENTAR ALTURA MÍNIMA DEL CARD PRINCIPAL -->
+<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden min-h-[800px] grid grid-cols-1 xl:grid-cols-3 animate-entry" style="animation-delay: 200ms;">
         <div class="xl:col-span-2 flex flex-col border-r border-gray-100 dark:border-slate-700">
             <div class="flex border-b border-gray-100 dark:border-slate-700">
                <button onclick="switchTab('detail')" id="btn-detail" 
@@ -884,11 +885,46 @@ require 'includes/header.php';
             </div>
             
             <?php if(!in_array($contract['status'], ['CANCELLED', 'ARCHIVED'])): ?>
-            <div class="p-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700"><form method="POST" class="relative" onsubmit="window.showLoading('Enviando', 'Guardando y notificando...')"><input type="hidden" name="action" value="add_observation"><input type="text" name="comment" required placeholder="Escribir..." class="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-xl py-3 pl-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"><button type="submit" class="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-lg"><i data-lucide="send" class="w-4 h-4"></i></button></form></div>
+            <div class="p-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+                <form method="POST" class="relative" onsubmit="window.showLoading('Enviando', 'Guardando observación...')">
+                    <input type="hidden" name="action" value="add_observation">
+                    
+                    <div class="relative">
+                        <textarea 
+                            name="comment" 
+                            required 
+                            rows="5" 
+                            placeholder="Deja un comentario u observación, se notificará a los involucrados..." 
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pr-14 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y custom-scrollbar shadow-inner placeholder:text-slate-400"
+                            onkeydown="if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); this.form.requestSubmit(); }"
+                        ></textarea>
+                        
+                        <!-- Botón de envío -->
+                        <button type="submit" 
+                                class="absolute bottom-3 right-3 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-transform hover:scale-105 active:scale-95"
+                                title="Enviar (Ctrl + Enter)">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Indicador de Atajo -->
+                    <div class="flex justify-between items-center mt-2 px-1">
+                        <p class="text-[10px] text-slate-400">
+                            <i data-lucide="corner-down-right" class="w-3 h-3 inline mr-1"></i>
+                            Ctrl + Enter, para enviar mensaje.
+                        </p>
+                        <span class="text-[10px] font-bold text-slate-300 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 hidden sm:inline-block">
+                            Ctrl + Enter
+                        </span>
+                    </div>
+                </form>
+            </div>
             <?php else: ?>
-            <div class="p-4 text-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2">
-                <i data-lucide="lock" class="w-4 h-4"></i>
-                <span class="font-medium">Flujo finalizado. No se permiten comentarios.</span>
+            <div class="p-6 text-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-2">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
+                    <i data-lucide="lock" class="w-5 h-5"></i>
+                </div>
+                <span class="font-medium">Flujo finalizado. No se permiten más comentarios.</span>
             </div>
             <?php endif; ?>
 
@@ -909,7 +945,14 @@ require 'includes/header.php';
             </div>
             <div class="mb-4 text-left">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Observación <span id="commentRequired" class="text-red-500 hidden">*</span></label>
-                <textarea name="comment" id="actionComment" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none dark:text-white mb-2 resize-none" placeholder="Observación opcional..."></textarea>
+                <textarea 
+                    name="comment" 
+                    id="actionComment" 
+                    rows="6" 
+                    class="w-full bg-slate-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y shadow-inner custom-scrollbar" 
+                    placeholder="Escribe el motivo detallado o las instrucciones..."
+                    onkeydown="if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); this.form.requestSubmit(); }">
+                </textarea>
             </div>
             <div class="flex gap-3">
                 <button type="button" onclick="document.getElementById('modalAction').classList.add('hidden')" class="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-medium transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">Cancelar</button>

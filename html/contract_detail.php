@@ -872,19 +872,86 @@ require 'includes/header.php';
                 </div>
 
                 <div class="space-y-3">
-                    <?php foreach($allVersions as $idx => $v): ?>
-                    <div class="flex justify-between items-center p-4 rounded-xl border border-gray-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors <?= $idx===0 ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900' : '' ?>">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-white dark:bg-slate-800 rounded-lg text-blue-500"><i data-lucide="file" class="w-5 h-5"></i></div>
-                            <div>
-                                <p class="font-bold text-slate-700 dark:text-slate-200 text-sm">Versión <?= $v['version_number'] ?> <?= $idx===0 ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 rounded-full ml-1">ACTUAL</span>' : '' ?></p>
-                                <p class="text-xs text-slate-400"><?= $v['file_name'] ?> • <?= date('d/m H:i', strtotime($v['created_at'])) ?></p>
+                    <?php 
+                    // Separamos la última versión del resto
+                    $latestVer = $allVersions[0] ?? null;
+                    $historyVer = array_slice($allVersions, 1);
+                    $isArchived = ($contract['status'] === 'ARCHIVED');
+                    ?>
+
+                    <?php if ($latestVer): ?>
+                        <!-- 1. VERSIÓN ACTUAL (SIEMPRE VISIBLE) -->
+                        <div class="flex justify-between items-center p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-900/20 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-white dark:bg-slate-800 rounded-lg text-blue-500 shadow-sm"><i data-lucide="file-check" class="w-5 h-5"></i></div>
+                                <div>
+                                    <p class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+                                        Versión <?= $latestVer['version_number'] ?> 
+                                        <span class="text-[10px] bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full uppercase tracking-wide">Vigente</span>
+                                    </p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        <?= $latestVer['file_name'] ?> • <?= date('d/m/Y H:i', strtotime($latestVer['created_at'])) ?>
+                                    </p>
+                                </div>
                             </div>
+                            <a href="download.php?id=<?= $latestVer['id'] ?>&file=<?= urlencode($latestVer['file_name']) ?>" target="_blank" class="text-sm font-bold text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 flex items-center gap-1 p-2 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
+                                <i data-lucide="download" class="w-4 h-4"></i> Descargar
+                            </a>
                         </div>
-                        <a href="download.php?id=<?= $v['id'] ?>&file=<?= urlencode($v['file_name']) ?>" target="_blank" class="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1"><i data-lucide="download" class="w-4 h-4"></i> Descargar</a>
-                    </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php if (count($historyVer) > 0): ?>
+                        
+                        <!-- BOTÓN TOGGLE (SOLO SI ESTÁ ARCHIVADO) -->
+                        <?php if ($isArchived): ?>
+                            <div class="text-center py-2">
+                                <button onclick="toggleHistory()" id="btnToggleHistory" class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center justify-center gap-1 mx-auto transition-colors group">
+                                    <span>Ver historial completo (<?= count($historyVer) ?> versiones anteriores)</span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300 group-hover:translate-y-0.5"></i>
+                                </button>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- CONTENEDOR HISTORIAL (OCULTO SI ARCHIVADO, VISIBLE SI NO) -->
+                        <div id="historyContainer" class="<?= $isArchived ? 'hidden' : '' ?> space-y-3 pl-2 border-l-2 border-slate-100 dark:border-slate-800 ml-4 transition-all duration-500">
+                            <?php foreach($historyVer as $v): ?>
+                                <div class="flex justify-between items-center p-3 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all opacity-80 hover:opacity-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-400"><i data-lucide="history" class="w-4 h-4"></i></div>
+                                        <div>
+                                            <p class="font-bold text-slate-600 dark:text-slate-300 text-xs">Versión <?= $v['version_number'] ?></p>
+                                            <p class="text-[10px] text-slate-400"><?= date('d/m H:i', strtotime($v['created_at'])) ?> • Por <?= $_SESSION['name'] // Simplificación visual ?></p>
+                                        </div>
+                                    </div>
+                                    <a href="download.php?id=<?= $v['id'] ?>&file=<?= urlencode($v['file_name']) ?>" target="_blank" class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1">
+                                        <i data-lucide="download" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                    <?php endif; ?>
                 </div>
+
+                <!-- SCRIPT LOCAL PARA EL TOGGLE -->
+                <script>
+                    function toggleHistory() {
+                        const container = document.getElementById('historyContainer');
+                        const btn = document.getElementById('btnToggleHistory');
+                        const icon = btn.querySelector('i'); // El ícono chevron
+                        
+                        if (container.classList.contains('hidden')) {
+                            container.classList.remove('hidden');
+                            container.classList.add('animate-fade-in-up'); // Tu animación existente
+                            btn.querySelector('span').innerText = "Ocultar historial";
+                            icon.style.transform = "rotate(180deg)";
+                        } else {
+                            container.classList.add('hidden');
+                            btn.querySelector('span').innerText = "Ver historial completo (<?= count($historyVer) ?> versiones anteriores)";
+                            icon.style.transform = "rotate(0deg)";
+                        }
+                    }
+                </script>
             </div>
 
             <div id="tab-audit" class="hidden p-0 overflow-y-auto h-[600px] custom-scrollbar">

@@ -298,151 +298,155 @@ if (!empty($_GET['filter'])) {
 ?>
 
 <div class="flex flex-col gap-4 mb-6 animate-entry">
-    <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+    
+    <!-- 1. BARRA SUPERIOR: TÍTULO Y BOTONES DE ACCIÓN -->
+    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
+        
+        <!-- TÍTULO Y CONTADOR -->
         <div>
             <h2 class="text-3xl font-bold text-slate-800 dark:text-white">Contratos</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Visualizando <?= count($contracts) ?> de <?= $totalRecords ?> documentos.
+                Gestión centralizada de documentos legales.
+                <span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-xs font-bold ml-2">
+                    <?= count($contracts) ?> / <?= $totalRecords ?>
+                </span>
             </p>
         </div>
-        <!-- CÁLCULO DEL CONTADOR "TU ATENCIÓN" -->
+
+        <!-- CÁLCULO TU ATENCIÓN (PHP) -->
         <?php 
             $globalActionCount = 0;
             if ($userRole === 'DEPT_HEAD') {
-                // Para Solicitante: Observaciones (Turno User) O Faltan Anexos
-                $sqlG = "SELECT COUNT(*) FROM contracts WHERE initiator_id = ? AND (
-                    (status = 'OBSERVATIONS' AND observation_turn = 'USER') OR 
-                    (waiting_for_annexes = 1 AND status NOT IN ('ARCHIVED', 'CANCELLED'))
-                )";
+                $sqlG = "SELECT COUNT(*) FROM contracts WHERE initiator_id = ? AND ((status = 'OBSERVATIONS' AND observation_turn = 'USER') OR (waiting_for_annexes = 1 AND status NOT IN ('ARCHIVED', 'CANCELLED')))";
                 $stmtG = $pdo->prepare($sqlG); $stmtG->execute([$userId]);
                 $globalActionCount = $stmtG->fetchColumn();
             } elseif (in_array($userRole, ['LEGAL', 'SUPER_ADMIN'])) {
-                // Para Legal: Todos los estados pendientes de acción
-                $sqlG = "SELECT COUNT(*) FROM contracts WHERE 
-                    status IN ('UNREVIEWED', 'IN_REVIEW', 'LEGAL_REVIEW_FINAL', 'SIGNATURE') OR 
-                    (status = 'OBSERVATIONS' AND observation_turn = 'LEGAL')";
+                $sqlG = "SELECT COUNT(*) FROM contracts WHERE status IN ('UNREVIEWED', 'IN_REVIEW', 'LEGAL_REVIEW_FINAL', 'SIGNATURE') OR (status = 'OBSERVATIONS' AND observation_turn = 'LEGAL')";
                 $globalActionCount = $pdo->query($sqlG)->fetchColumn();
             }
         ?>
-        <div class="flex gap-2 flex-wrap">
+
+        <!-- BARRA DE HERRAMIENTAS (BOTONES UNIFICADOS) -->
+        <div class="flex flex-wrap gap-3 w-full xl:w-auto">
+            
             <!-- BOTÓN TU ATENCIÓN -->
             <?php 
-                // === LÓGICA DEL BOTÓN TOGGLE "TU ATENCIÓN" ===
                 $isActionActive = (isset($_GET['filter']) && $_GET['filter'] == 'action_required');
-
-                // Clona los parámetros actuales de la URL para no perder búsquedas o categorías
-                $toggleParams = $_GET;
-                // para evitar buscar datos en una página que no existe en el nuevo set de resultados.
-                unset($toggleParams['page']); 
-
-                if ($isActionActive) {
-                    // Si ya está activo, al hacer clic queremos QUITAR el filtro
-                    unset($toggleParams['filter']);
-                } else {
-                    // Si no está activo, lo agregamos
-                    $toggleParams['filter'] = 'action_required';
-                }
-
-                // Construye la URL final
+                $toggleParams = $_GET; unset($toggleParams['page']); 
+                if ($isActionActive) unset($toggleParams['filter']); else $toggleParams['filter'] = 'action_required';
                 $toggleUrl = "contracts?" . http_build_query($toggleParams);
-
-                // Definimos las clases visuales según el estado
                 $actionClass = $isActionActive 
-                    ? "bg-red-600 text-white shadow-lg ring-2 ring-red-300 dark:ring-red-900 scale-105" 
+                    ? "bg-red-600 text-white shadow-md shadow-red-500/30 ring-2 ring-red-500 dark:ring-red-400" 
                     : "bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20";
             ?>
-            <!-- BOTÓN TU ATENCIÓN (BADGE FLOTANTE) -->
-            <a href="<?= $toggleUrl ?>" class="<?= $actionClass ?> relative px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 group" title="<?= $isActionActive ? 'Ver todos los contratos' : 'Ver solo lo que requiere mi atención' ?>">
-                
+            <a href="<?= $toggleUrl ?>" class="<?= $actionClass ?> relative px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 group flex-1 sm:flex-none" title="Ver pendientes">
                 <i data-lucide="<?= $isActionActive ? 'bell-off' : 'bell-ring' ?>" class="w-4 h-4 <?= $isActionActive ? '' : 'animate-pulse' ?>"></i> 
                 <span class="hidden sm:inline"><?= $isActionActive ? 'Ver Todo' : 'Tu Atención' ?></span>
-                
-                <!-- BADGE TIPO APP (FLOTANTE) -->
                 <?php if($globalActionCount > 0): ?>
-                    <span class="absolute -top-2 -right-2 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-800 px-1 z-10">
+                    <span class="absolute -top-2 -right-2 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-900 px-1 z-10">
                         <?= $globalActionCount > 99 ? '99+' : $globalActionCount ?>
                     </span>
                 <?php endif; ?>
             </a>
             
-            <!-- BOTÓN TOGGLE FILTROS -->
-            <button onclick="toggleFilters()" class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+            <!-- BOTÓN FILTROS (Activador) -->
+            <button onclick="toggleFilters()" id="btnFilters" class="flex-1 sm:flex-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 shadow-sm transition-all duration-200 active:scale-95">
                 <i data-lucide="filter" class="w-4 h-4"></i> Filtros
+                <!-- Indicador si hay filtros activos (opcional) -->
+                <?php if(!empty($_GET['q']) || !empty($_GET['status_filter']) || !empty($_GET['category_filter'])): ?>
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <?php endif; ?>
             </button>
             
-            <!-- BOTÓN EXPORTAR EXCEL -->
-            <button onclick="window.location.href='export_excel.php'+window.location.search" 
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-medium flex items-center gap-2 shadow-sm transition-transform active:scale-95"
-                    title="Descargar reporte según filtros actuales">
+            <!-- BOTÓN EXCEL -->
+            <button onclick="window.location.href='export_excel.php'+window.location.search" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 transition-all duration-200 active:scale-95">
                 <i data-lucide="sheet" class="w-4 h-4"></i> <span class="hidden sm:inline">Excel</span>
             </button>
 
             <!-- BOTÓN NUEVO -->
-            <button onclick="window.openContractModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-transform active:scale-95">
-                <i data-lucide="plus"></i> <span class="hidden sm:inline">Nuevo</span>
+            <button onclick="window.openContractModal()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-all duration-200 active:scale-95">
+                <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">Nuevo</span>
             </button>
         </div>
     </div>
     
-    <!-- BARRA DE FILTROS -->
-    <div id="filterSection" class="hidden bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 transition-all duration-300">
-        <form method="GET" action="contracts" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- 2. CAJÓN DE FILTROS (COMPACTO Y FLEXIBLE) -->
+    <div id="filterSection" class="hidden w-full mt-2">
+        <form method="GET" action="contracts" class="bg-slate-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 p-4 rounded-2xl shadow-inner relative flex flex-wrap gap-3 items-end">
             
-            <?php if(isset($_GET['filter'])): ?>
-                <input type="hidden" name="filter" value="<?= htmlspecialchars($_GET['filter']) ?>">
-            <?php endif; ?>
+            <!-- Triangulito decorativo -->
+            <div class="absolute -top-2 right-[220px] hidden xl:block w-4 h-4 bg-slate-50 dark:bg-slate-800 border-t border-l border-gray-200 dark:border-slate-700 transform rotate-45"></div>
 
-            <!-- 1. Buscador -->
-            <div class="relative md:col-span-1">
-                <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
-                <input type="text" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" placeholder="Buscar texto, ID..." class="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white transition-all focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <!-- 2. Estado (Actualizado con IN_REVIEW y sin Visto Bueno) -->
-            <div>
-                <select name="status_filter" class="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white cursor-pointer transition-all focus:ring-2 focus:ring-blue-500">
-                    <option value="">Estado: Todos</option>
-                    <?php foreach($statusConfig as $key => $conf): ?>
-                        <option value="<?= $key ?>" <?= (isset($_GET['status_filter']) && $_GET['status_filter'] == $key) ? 'selected' : '' ?>><?= $conf['label'] ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <input type="hidden" name="filter" value="<?= htmlspecialchars($_GET['filter'] ?? '') ?>">
+
+            <!-- 1. BÚSQUEDA (Más ancho) -->
+            <div class="w-full md:w-64 lg:w-72">
+                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Búsqueda</label>
+                <div class="relative group">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-400 w-4 h-4"></i>
+                    <input type="text" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" 
+                           placeholder="Nombre, ID..." 
+                           class="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
+                </div>
             </div>
             
-            <!-- 3. Categoría -->
-            <div>
-                <select name="category_filter" class="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white cursor-pointer transition-all focus:ring-2 focus:ring-blue-500">
-                    <option value="">Categoría: Todas</option>
-                    <?php foreach($categories as $cat): ?>
-                        <option value="<?= $cat ?>" <?= (isset($_GET['category_filter']) && $_GET['category_filter'] == $cat) ? 'selected' : '' ?>><?= $cat ?></option>
-                    <?php endforeach; ?>
-                </select>
+            <!-- 2. ESTADO -->
+            <div class="w-full sm:w-40 md:flex-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Estado</label>
+                <div class="relative">
+                    <select name="status_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                        <option value="">Todos</option>
+                        <?php foreach($statusConfig as $key => $conf): ?>
+                            <option value="<?= $key ?>" <?= (isset($_GET['status_filter']) && $_GET['status_filter'] == $key) ? 'selected' : '' ?>><?= $conf['label'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                </div>
+            </div>
+            
+            <!-- 3. CATEGORÍA -->
+            <div class="w-full sm:w-40 md:flex-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Categoría</label>
+                <div class="relative">
+                    <select name="category_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                        <option value="">Todas</option>
+                        <?php foreach($categories as $cat): ?>
+                            <option value="<?= $cat ?>" <?= (isset($_GET['category_filter']) && $_GET['category_filter'] == $cat) ? 'selected' : '' ?>><?= $cat ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                </div>
             </div>
 
-            <!-- 4. Prioridad -->
-            <div>
-                <select name="priority_filter" class="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white cursor-pointer transition-all focus:ring-2 focus:ring-blue-500">
-                    <option value="">Prioridad: Todas</option>
-                    <option value="HIGH" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'HIGH') ? 'selected' : '' ?>>Alta</option>
-                    <option value="MEDIUM" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'MEDIUM') ? 'selected' : '' ?>>Media</option>
-                    <option value="LOW" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'LOW') ? 'selected' : '' ?>>Baja</option>
-                </select>
+            <!-- 4. PRIORIDAD -->
+            <div class="w-full sm:w-32 md:flex-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Prioridad</label>
+                <div class="relative">
+                    <select name="priority_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                        <option value="">Todas</option>
+                        <option value="HIGH" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'HIGH') ? 'selected' : '' ?>>Alta</option>
+                        <option value="MEDIUM" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'MEDIUM') ? 'selected' : '' ?>>Media</option>
+                        <option value="LOW" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'LOW') ? 'selected' : '' ?>>Baja</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                </div>
             </div>
 
-            <!-- 5. Filtro Usuario (Solo Roles Altos) -->
+            <!-- 5. SOLICITANTE (ADMINS) -->
             <?php if(in_array($userRole, ['SUPER_ADMIN', 'LEGAL', 'MANAGER'])): ?>
-            <div class="md:col-span-2">
-                <input type="text" name="user_filter" value="<?= htmlspecialchars($_GET['user_filter'] ?? '') ?>" placeholder="Filtrar por nombre de solicitante..." class="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none dark:text-white transition-all focus:ring-2 focus:ring-blue-500">
+            <div class="w-full sm:w-40 md:flex-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Solicitante</label>
+                <input type="text" name="user_filter" value="<?= htmlspecialchars($_GET['user_filter'] ?? '') ?>" placeholder="Nombre..." class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
             </div>
-            <?php else: ?>
-                <div class="md:col-span-2 hidden md:block"></div> 
             <?php endif; ?>
 
-            <div class="flex gap-2 md:col-span-2 justify-end">
-                <button type="submit" class="bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">Aplicar Filtros</button>
-                <?php if(!empty($_GET)): ?>
-                    <!-- <a href="contracts" class="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i> Limpiar</a> -->
-                <?php endif; ?>
+            <!-- BOTÓN APLICAR (ALINEADO A LA DERECHA - ml-auto) -->
+            <div class="w-full md:w-auto md:ml-auto pt-2 md:pt-0">
+                <button type="submit" class="w-full md:w-auto bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="check" class="w-4 h-4"></i> Aplicar
+                </button>
             </div>
+            
         </form>
     </div>
 </div>
@@ -583,9 +587,17 @@ if (!empty($_GET['filter'])) {
                                         <span class="inline-block w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ml-1" data-tooltip="Riesgos Detectados" data-color="bg-red-600"></span>
                                     <?php endif; ?>
                                 </h4>
-                                <span class="text-xs text-slate-400 font-mono block w-fit cursor-help mt-0.5" data-tooltip="Código de Referencia"><?= $c['id'] ?></span>
-                                <p class="text-xs text-slate-500 mt-1 w-fit cursor-help flex items-center gap-1" data-tooltip="Proveedor / Contraparte">
-                                   <i data-lucide="building-2" class="w-3 h-3"></i> <?= htmlspecialchars($c['supplier']) ?>
+                                <!-- ID: Aclarado a slate-500 en dark para que no brille tanto pero se lea -->
+                                <span class="text-xs text-slate-400 dark:text-slate-500 font-mono block w-fit cursor-help mt-0.5" 
+                                    data-tooltip="Código de Referencia">
+                                    <?= $c['id'] ?>
+                                </span>
+
+                                <!-- PROVEEDOR: Aclarado a slate-300 (Blanco hueso) -->
+                                <p class="text-xs text-slate-500 dark:text-slate-300 mt-1 w-fit cursor-help flex items-center gap-1" 
+                                data-tooltip="Proveedor / Contraparte">
+                                <i data-lucide="building-2" class="w-3 h-3"></i>
+                                <?= htmlspecialchars($c['supplier']) ?>
                                 </p>
                             </div>
                         </div>
@@ -606,17 +618,30 @@ if (!empty($_GET['filter'])) {
                                     <span class="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md border shadow-sm bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30 cursor-help" data-tooltip="El abogado está revisando cambios" data-color="bg-blue-700"><i data-lucide="scale" class="w-3 h-3"></i> Espera Legal</span>
                                 <?php endif; ?>
                             <?php endif; ?>
-                            <span class="text-[11px] px-2 py-0.5 rounded border bg-gray-50 text-slate-500 border-gray-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"><?= htmlspecialchars($c['category']) ?></span>
+                            <span class="text-[11px] px-2 py-0.5 rounded border bg-gray-50 text-slate-500 border-gray-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                                <?= htmlspecialchars($c['category']) ?>
+                            </span>
                         </div>
                     </td>
 
                     <td class="p-4 align-top">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold"><?= substr($c['initiator_name'], 0, 1) ?></div>
-                            <div class="text-xs"><p class="font-medium text-slate-700 dark:text-slate-200"><?= htmlspecialchars($c['initiator_name']) ?></p><p class="text-slate-400"><?= htmlspecialchars($c['department']) ?></p></div>
+                            <div class="text-xs">
+                                <p class="font-medium text-slate-700 dark:text-slate-200">
+                                    <?= htmlspecialchars($c['initiator_name']) ?>
+                                </p>
+                                <p class="text-slate-400 dark:text-slate-400">
+                                    <?= htmlspecialchars($c['department']) ?>
+                                </p>
+                            </div>
                         </div>
                     </td>
-                    <td class="p-4 align-top text-right"><span class="text-xs font-mono text-slate-500"><?= date('d/m/Y', strtotime($c['created_at'])) ?></span></td>
+                    <td class="p-4 align-top text-right">
+                        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">
+                            <?= date('d/m/Y', strtotime($c['created_at'])) ?>
+                        </span>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

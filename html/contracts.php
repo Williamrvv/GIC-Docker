@@ -371,83 +371,85 @@ if (!empty($_GET['filter'])) {
     </div>
     
     <!-- 2. CAJÓN DE FILTROS (COMPACTO Y FLEXIBLE) -->
-    <div id="filterSection" class="hidden w-full mt-2">
-        <form method="GET" action="contracts" class="bg-slate-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 p-4 rounded-2xl shadow-inner relative flex flex-wrap gap-3 items-end">
+    <div id="filterSection" class="grid grid-rows-[0fr] opacity-0 -translate-y-4 w-full transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
+        <div class="overflow-hidden p-1">
+            <form method="GET" action="contracts" class="mt-2 bg-slate-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 p-4 rounded-2xl shadow-inner relative flex flex-wrap gap-3 items-end">
             
-            <!-- Triangulito decorativo -->
-            <div class="absolute -top-2 right-[220px] hidden xl:block w-4 h-4 bg-slate-50 dark:bg-slate-800 border-t border-l border-gray-200 dark:border-slate-700 transform rotate-45"></div>
+                <!-- Triangulito decorativo -->
+                <div class="absolute -top-2 right-[220px] hidden xl:block w-4 h-4 bg-slate-50 dark:bg-slate-800 border-t border-l border-gray-200 dark:border-slate-700 transform rotate-45"></div>
 
-            <input type="hidden" name="filter" value="<?= htmlspecialchars($_GET['filter'] ?? '') ?>">
+                <input type="hidden" name="filter" value="<?= htmlspecialchars($_GET['filter'] ?? '') ?>">
 
-            <!-- 1. BÚSQUEDA (Más ancho) -->
-            <div class="w-full md:w-64 lg:w-72">
-                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Búsqueda</label>
-                <div class="relative group">
-                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-400 w-4 h-4"></i>
-                    <input type="text" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" 
-                           placeholder="Nombre, ID..." 
-                           class="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
+                <!-- 1. BÚSQUEDA (Más ancho) -->
+                <div class="w-full md:w-64 lg:w-72">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Búsqueda</label>
+                    <div class="relative group">
+                        <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-400 w-4 h-4"></i>
+                        <input type="text" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" 
+                            placeholder="Nombre, ID..." 
+                            class="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
+                    </div>
                 </div>
-            </div>
+                
+                <!-- 2. ESTADO -->
+                <div class="w-full sm:w-40 md:flex-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Estado</label>
+                    <div class="relative">
+                        <select name="status_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                            <option value="">Todos</option>
+                            <?php foreach($statusConfig as $key => $conf): ?>
+                                <option value="<?= $key ?>" <?= (isset($_GET['status_filter']) && $_GET['status_filter'] == $key) ? 'selected' : '' ?>><?= $conf['label'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+                
+                <!-- 3. CATEGORÍA -->
+                <div class="w-full sm:w-40 md:flex-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Categoría</label>
+                    <div class="relative">
+                        <select name="category_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                            <option value="">Todas</option>
+                            <?php foreach($categories as $cat): ?>
+                                <option value="<?= $cat ?>" <?= (isset($_GET['category_filter']) && $_GET['category_filter'] == $cat) ? 'selected' : '' ?>><?= $cat ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 4. PRIORIDAD -->
+                <div class="w-full sm:w-32 md:flex-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Prioridad</label>
+                    <div class="relative">
+                        <select name="priority_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
+                            <option value="">Todas</option>
+                            <option value="HIGH" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'HIGH') ? 'selected' : '' ?>>Alta</option>
+                            <option value="MEDIUM" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'MEDIUM') ? 'selected' : '' ?>>Media</option>
+                            <option value="LOW" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'LOW') ? 'selected' : '' ?>>Baja</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 5. SOLICITANTE (ADMINS) -->
+                <?php if(in_array($userRole, ['SUPER_ADMIN', 'LEGAL', 'MANAGER'])): ?>
+                <div class="w-full sm:w-40 md:flex-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Solicitante</label>
+                    <input type="text" name="user_filter" value="<?= htmlspecialchars($_GET['user_filter'] ?? '') ?>" placeholder="Nombre..." class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
+                </div>
+                <?php endif; ?>
+
+                <!-- BOTÓN APLICAR (ALINEADO A LA DERECHA - ml-auto) -->
+                <div class="w-full md:w-auto md:ml-auto pt-2 md:pt-0">
+                    <button type="submit" class="w-full md:w-auto bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-95">
+                        <i data-lucide="check" class="w-4 h-4"></i> Aplicar
+                    </button>
+                </div>
             
-            <!-- 2. ESTADO -->
-            <div class="w-full sm:w-40 md:flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Estado</label>
-                <div class="relative">
-                    <select name="status_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
-                        <option value="">Todos</option>
-                        <?php foreach($statusConfig as $key => $conf): ?>
-                            <option value="<?= $key ?>" <?= (isset($_GET['status_filter']) && $_GET['status_filter'] == $key) ? 'selected' : '' ?>><?= $conf['label'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                </div>
-            </div>
-            
-            <!-- 3. CATEGORÍA -->
-            <div class="w-full sm:w-40 md:flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Categoría</label>
-                <div class="relative">
-                    <select name="category_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
-                        <option value="">Todas</option>
-                        <?php foreach($categories as $cat): ?>
-                            <option value="<?= $cat ?>" <?= (isset($_GET['category_filter']) && $_GET['category_filter'] == $cat) ? 'selected' : '' ?>><?= $cat ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                </div>
-            </div>
-
-            <!-- 4. PRIORIDAD -->
-            <div class="w-full sm:w-32 md:flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Prioridad</label>
-                <div class="relative">
-                    <select name="priority_filter" class="w-full pl-3 pr-8 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none">
-                        <option value="">Todas</option>
-                        <option value="HIGH" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'HIGH') ? 'selected' : '' ?>>Alta</option>
-                        <option value="MEDIUM" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'MEDIUM') ? 'selected' : '' ?>>Media</option>
-                        <option value="LOW" <?= (isset($_GET['priority_filter']) && $_GET['priority_filter'] == 'LOW') ? 'selected' : '' ?>>Baja</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"></i>
-                </div>
-            </div>
-
-            <!-- 5. SOLICITANTE (ADMINS) -->
-            <?php if(in_array($userRole, ['SUPER_ADMIN', 'LEGAL', 'MANAGER'])): ?>
-            <div class="w-full sm:w-40 md:flex-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block ml-1">Solicitante</label>
-                <input type="text" name="user_filter" value="<?= htmlspecialchars($_GET['user_filter'] ?? '') ?>" placeholder="Nombre..." class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none dark:text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
-            </div>
-            <?php endif; ?>
-
-            <!-- BOTÓN APLICAR (ALINEADO A LA DERECHA - ml-auto) -->
-            <div class="w-full md:w-auto md:ml-auto pt-2 md:pt-0">
-                <button type="submit" class="w-full md:w-auto bg-slate-800 dark:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-95">
-                    <i data-lucide="check" class="w-4 h-4"></i> Aplicar
-                </button>
-            </div>
-            
-        </form>
+            </form>
+        </div>    
     </div>
 </div>
 
@@ -741,10 +743,31 @@ if (!empty($_GET['filter'])) {
 <script>
     function toggleFilters() {
         const section = document.getElementById('filterSection');
-        if(section.classList.contains('hidden')) {
-            section.classList.remove('hidden');
+        const btn = document.getElementById('btnFilters');
+        
+        // Verificamos si está cerrado revisando la clase de grid
+        const isClosed = section.classList.contains('grid-rows-[0fr]');
+
+        if (isClosed) {
+            // ABRIR (Animación Lujosa)
+            section.classList.remove('grid-rows-[0fr]', 'opacity-0', '-translate-y-4');
+            section.classList.add('grid-rows-[1fr]', 'opacity-100', 'translate-y-0');
+            
+            // Estado activo del botón
+            if(btn) {
+                btn.classList.add('bg-slate-100', 'dark:bg-slate-700', 'ring-2', 'ring-blue-100', 'dark:ring-blue-900');
+                btn.classList.remove('bg-white', 'dark:bg-slate-800', 'border-gray-200');
+            }
         } else {
-            section.classList.add('hidden');
+            // CERRAR
+            section.classList.remove('grid-rows-[1fr]', 'opacity-100', 'translate-y-0');
+            section.classList.add('grid-rows-[0fr]', 'opacity-0', '-translate-y-4');
+            
+            // Restaurar botón
+            if(btn) {
+                btn.classList.remove('bg-slate-100', 'dark:bg-slate-700', 'ring-2', 'ring-blue-100', 'dark:ring-blue-900');
+                btn.classList.add('bg-white', 'dark:bg-slate-800', 'border-gray-200');
+            }
         }
     }
 </script>

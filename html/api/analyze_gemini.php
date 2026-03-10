@@ -35,8 +35,8 @@ if (!$apiKey) {
 // $modelName = "gemini-3-pro-preview"; // costo: input -> $1.00, output -> $5.00 por 1M tokens
 // $modelName = "gemini-3-flash-preview"; // costo: input -> $0.50, output -> $3.00 por 1M tokens
 // $modelName = "gemini-2.5-pro"; // costo: input -> $1.00, output -> $5.00 por 1M tokens
-// $modelName = "gemini-2.5-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
-$modelName = "gemini-2.5-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
+ $modelName = "gemini-2.5-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
+//$modelName = "gemini-2.5-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
 // $modelName = "gemini-2.0-flash"; // costo: input -> $0.35, output -> $1.05 por 1M tokens
 // $modelName = "gemini-2.0-flash-lite"; // costo: input -> $0.10, output -> $0.40 por 1M tokens
 $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=" . $apiKey;

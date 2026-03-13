@@ -25,7 +25,7 @@ if (($type === 'text' && strlen($input['content'] ?? '') < 10) ||
 
 // === CONFIGURACIÓN ===
 // === 3. CONFIGURACIÓN (VÍA ENV) ===
-$apiKey = getenv('GEMINI_API_KEY'); // Leemos del entorno Docker
+$apiKey = getenv('GEMINI_API_KEY'); 
 
 if (!$apiKey) {
     echo json_encode(['error' => 'Error de Configuración: Falta GEMINI_API_KEY en variables de entorno.']);
@@ -135,16 +135,30 @@ if ($httpCode !== 200) {
     echo json_encode(['error' => "Gemini API ($httpCode): " . ($err['error']['message'] ?? $response)]); exit;
 }
 
-// === PROCESAMIENTO ===
+// === PROCESAMIENTO (CON LIMPIEZA AGRESIVA DE JSON) ===
 $decoded = json_decode($response, true);
 $aiText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
-$aiText = preg_replace('/^```json\s*/i', '', $aiText);
-$aiText = preg_replace('/\s*```$/', '', $aiText);
 
-$resultData = json_decode($aiText, true);
+// 1. Extraer estrictamente el contenido entre la primera y la última llave { ... }
+$firstBrace = strpos($aiText, '{');
+$lastBrace = strrpos($aiText, '}');
+
+if ($firstBrace !== false && $lastBrace !== false) {
+    $cleanJsonString = substr($aiText, $firstBrace, ($lastBrace - $firstBrace) + 1);
+} else {
+    $cleanJsonString = $aiText; // Fallback si por alguna razón no hay llaves
+}
+
+// 2. Intentar decodificar
+$resultData = json_decode($cleanJsonString, true);
 
 if (!$resultData) {
-    echo json_encode(['error' => 'Error parseando respuesta IA', 'raw' => $aiText]);
+    // Si sigue fallando, devolvemos el motivo exacto del fallo para depurar
+    echo json_encode([
+        'error' => 'Error parseando respuesta IA: ' . json_last_error_msg(), 
+        'raw_received' => $aiText
+    ]);
+    exit; // Detener ejecución para que no intente armar el HTML
 } else {
     // HTML Visual
     $htmlOutput = "<div class='space-y-4'>";

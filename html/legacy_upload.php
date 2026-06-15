@@ -373,23 +373,49 @@ require 'includes/header.php';
                 payload = { type: 'base64', mime: file.type, content: b64.split(',')[1] };
             }
 
+            // 1. LLAMADA A LA API
             const res = await fetch('api/analyze_gemini.php', { 
                 method: 'POST', 
                 headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify(payload) 
             });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
 
-            if (data.title) document.getElementById('inputTitle').value = data.title;
-            if (data.supplier) document.getElementById('inputSupplier').value = data.supplier;
-            if (data.summary) document.getElementById('inputSummary').value = data.summary;
-            if (data.date) document.getElementById('inputDate').value = data.date;
+            // 2. OBTENER RESPUESTA (TEXTO CRUDO PRIMERO PARA DEPURAR)
+            const rawText = await res.text();
+            let responseData;
+
+            try {
+                // Intentamos convertir a JSON
+                responseData = JSON.parse(rawText);
+            } catch (err) {
+                // Si falla, mostramos en consola la basura que envió PHP/Gemini
+                console.error("🛑 EL SERVIDOR NO DEVOLVIÓ JSON VÁLIDO. TEXTO RECIBIDO:");
+                console.log(rawText);
+                throw new Error("El servidor devolvió datos inválidos (Revisa la consola F12).");
+            }
+
+            // 3. MANEJO DE ERRORES DEL JSON
+            if (responseData.error) {
+                if (responseData.raw_original) {
+                    console.group("🛑 ERROR DE GEMINI (CONSOLA ESPÍA)");
+                    console.error("Mensaje:", responseData.error);
+                    console.warn("Texto crudo recibido de Google:");
+                    console.log(responseData.raw_original);
+                    console.groupEnd();
+                }
+                throw new Error(responseData.error);
+            }
+
+            // 4. LLENAR FORMULARIO SI TODO SALIÓ BIEN
+            if (responseData.title) document.getElementById('inputTitle').value = responseData.title;
+            if (responseData.supplier) document.getElementById('inputSupplier').value = responseData.supplier;
+            if (responseData.summary) document.getElementById('inputSummary').value = responseData.summary;
+            if (responseData.date) document.getElementById('inputDate').value = responseData.date;
             
             const catSelect = document.getElementById('inputCategory');
-            if (data.category) {
+            if (responseData.category && catSelect) {
                 for(let i=0; i<catSelect.options.length; i++) {
-                    if (catSelect.options[i].value.toLowerCase() === data.category.toLowerCase()) {
+                    if (catSelect.options[i].value.toLowerCase() === responseData.category.toLowerCase()) {
                         catSelect.selectedIndex = i; break;
                     }
                 }

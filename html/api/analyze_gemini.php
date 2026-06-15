@@ -72,6 +72,7 @@ C. JURISDICCIÓN:
 INSTRUCCIONES DE SALIDA:
 - Si el contrato no tiene cláusula de Fuerza Mayor o Terminación, asume que NO existen -> RED FLAG.
 - Sé breve.
+- REGLA CRÍTICA DE FORMATO: No incluyas saltos de línea (Enters) dentro de los textos. El JSON debe ser minificado (una sola línea).
 
 FORMATO JSON OBLIGATORIO:
 {
@@ -106,12 +107,55 @@ if ($type === 'base64' || $type === 'image') {
     $parts[] = ["text" => "\n\n--- DOCUMENTO A AUDITAR ---\n" . $cleanText];
 }
 
+// === DEFINICIÓN DEL ESQUEMA JSON (STRUCTURED OUTPUT) ===
+$schema = [
+    "type" => "OBJECT",
+    "properties" => [
+        "title" => [
+            "type" => "STRING",
+            "description" => "Título corto del contrato"
+        ],
+        "supplier" => [
+            "type" => "STRING",
+            "description" => "Nombre del Proveedor detectado"
+        ],
+        "category" => [
+            "type" => "STRING",
+            "enum" => ["Servicios", "Alquiler de oficinas", "Otro"],
+            "description" => "Categoría del contrato"
+        ],
+        "summary" => [
+            "type" => "STRING",
+            "description" => "Resumen ejecutivo del contrato sin saltos de línea"
+        ],
+        "red_flags" => [
+            "type" => "OBJECT",
+            "properties" => [
+                "count" => [
+                    "type" => "INTEGER",
+                    "description" => "Número total de riesgos encontrados"
+                ],
+                "details" => [
+                    "type" => "ARRAY",
+                    "description" => "Lista de riesgos. Si count es 0, debe estar vacío.",
+                    "items" => ["type" => "STRING"]
+                ]
+            ],
+            "required" => ["count", "details"]
+        ]
+    ],
+    "required" => ["title", "supplier", "category", "summary", "red_flags"]
+];
+
 $payload = [
     "contents" => [["parts" => $parts]],
     "generationConfig" => [
-        "temperature" => 0.0, // CERO creatividad, pura comparación lógica
-        "maxOutputTokens" => 3000,
-        "response_mime_type" => "application/json"
+        "temperature" => 0.0,
+        // CAMBIO CRÍTICO: Aumentado de 2000 a 8192 para evitar que el JSON se corte a la mitad
+        "maxOutputTokens" => 8192, 
+        // CAMBIO 2: Esto obliga a la API a responder en formato JSON estricto (Structured Outputs)
+        "response_mime_type" => "application/json",
+        "response_schema" => $schema 
     ]
 ];
 
@@ -135,30 +179,32 @@ if ($httpCode !== 200) {
     echo json_encode(['error' => "Gemini API ($httpCode): " . ($err['error']['message'] ?? $response)]); exit;
 }
 
-// === PROCESAMIENTO (CON LIMPIEZA AGRESIVA DE JSON) ===
+// === PROCESAMIENTO ROBUSTO (CORREGIDO) ===
 $decoded = json_decode($response, true);
 $aiText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
-// 1. Extraer estrictamente el contenido entre la primera y la última llave { ... }
+// 1. Extraer solo el objeto JSON { ... } ignorando Markdown
 $firstBrace = strpos($aiText, '{');
 $lastBrace = strrpos($aiText, '}');
 
 if ($firstBrace !== false && $lastBrace !== false) {
-    $cleanJsonString = substr($aiText, $firstBrace, ($lastBrace - $firstBrace) + 1);
-} else {
-    $cleanJsonString = $aiText; // Fallback si por alguna razón no hay llaves
+    $aiText = substr($aiText, $firstBrace, ($lastBrace - $firstBrace) + 1);
 }
 
-// 2. Intentar decodificar
-$resultData = json_decode($cleanJsonString, true);
+// 2. Limpieza Segura: Quitamos caracteres nulos de Word (0-31) 
+// PERO conservamos los saltos de línea (\n,\r) y tabs (\t) que JSON necesita para su estructura.
+$aiText = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $aiText);
 
+$resultData = json_decode($aiText, true);
+
+// 3. Fallback y Diagnóstico
 if (!$resultData) {
-    // Si sigue fallando, devolvemos el motivo exacto del fallo para depurar
+    // Enviamos el texto crudo para que lo veas en la consola
     echo json_encode([
-        'error' => 'Error parseando respuesta IA: ' . json_last_error_msg(), 
-        'raw_received' => $aiText
+        'error' => 'Error parseando JSON: ' . json_last_error_msg(),
+        'raw_original' => $aiText
     ]);
-    exit; // Detener ejecución para que no intente armar el HTML
+    exit; 
 } else {
     // HTML Visual
     $htmlOutput = "<div class='space-y-4'>";
@@ -167,7 +213,7 @@ if (!$resultData) {
     
     $htmlOutput .= "<div class='bg-slate-50 p-3 rounded text-sm text-slate-700'><strong>Resumen:</strong> " . htmlspecialchars($resultData['summary']) . "</div>";
     
-    if ($resultData['red_flags']['count'] > 0) {
+    if (isset($resultData['red_flags']) && $resultData['red_flags']['count'] > 0) {
         $htmlOutput .= "<div class='bg-red-50 border-l-4 border-red-500 p-4'>";
         $htmlOutput .= "<h4 class='font-bold text-red-700 mb-2 flex items-center gap-2'>⚠️ INCUMPLIMIENTOS (" . $resultData['red_flags']['count'] . ")</h4>";
         $htmlOutput .= "<ul class='list-disc list-inside text-red-800 text-sm space-y-1'>";
